@@ -1,31 +1,63 @@
 const path = require('path');
+const TerserPlugin = require('terser-webpack-plugin');
+const JavaScriptObfuscator = require('webpack-obfuscator');
 
 module.exports = {
-  entry: './src/js/analyzeColors.js', // จุดเริ่มต้นของโค้ด
-  output: {
-    path: path.resolve(__dirname, 'dist'), // ผลลัพธ์จะถูกบันทึกที่นี่
-    filename: 'color-bandit.js', // ชื่อไฟล์ output
-    libraryTarget: 'module', // ใช้ ES Modules (ไม่ต้องใช้ library)
+  entry: {
+    main: './src/js/analyzeColors.js',
   },
-  experiments: {
-    outputModule: true, // เปิดใช้งาน ES Modules output
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'color-bandit.js', // ใช้ชื่อไฟล์คงที่
+    chunkFilename: '[name].bundle.js', // สำหรับไฟล์ chunk
+    library: 'ColorBandit',
+    libraryTarget: 'umd', // เพื่อให้รองรับทั้ง CommonJS, AMD และ ES Modules
+    globalObject: 'this',
+  },
+  mode: 'production',
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+    },
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          mangle: {
+            toplevel: true, // ทำให้ตัวแปรและฟังก์ชันระดับบนสุดถูกย่อ
+          },
+          compress: {
+            drop_console: true, // ลบ console.log
+            drop_debugger: true, // ลบ debugger
+          },
+          output: {
+            comments: false, // ลบคอมเมนต์ออกจากโค้ด
+          },
+        },
+        extractComments: false,
+      }),
+    ],
   },
   module: {
     rules: [
       {
-        test: /\.m?js$/, // จัดการไฟล์ .js และ .mjs
-        exclude: /(node_modules)/, // ยกเว้น node_modules
+        test: /\.js$/,
+        exclude: /(node_modules)/,
         use: {
-          loader: 'babel-loader', // ใช้ babel-loader
-          options: {
-            presets: ['@babel/preset-env'], // ตั้งค่า preset-env เพื่อแปลงโค้ด ES6+
-          },
+          loader: 'babel-loader',
         },
       },
     ],
   },
-  resolve: {
-    extensions: ['.js'], // ทำให้การ import ไม่จำเป็นต้องระบุ .js
-  },
-  mode: 'production', // สร้างไฟล์แบบ production
+  plugins: [
+    new JavaScriptObfuscator(
+      {
+        rotateStringArray: true,
+        stringArray: true,
+        stringArrayEncoding: ['base64'], // เข้ารหัส string
+        stringArrayThreshold: 0.75, // เปอร์เซ็นต์ของ string ที่จะเข้ารหัส
+      },
+      []
+    ),
+  ],
 };
