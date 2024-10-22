@@ -104,7 +104,7 @@ export async function analyzeColors(imageElement, options = {}) {
   }
   dominantColor = `rgb(${dominantColor})`;
 
-  // ฟังก์ชันคำนวณความแตกต่างของสี
+  // ฟังก์ชันคำนวณความแตกต่างของสี (Euclidean distance)
   function colorDifference(color1, color2) {
     const [r1, g1, b1] = color1.split(',').map(Number);
     const [r2, g2, b2] = color2.split(',').map(Number);

@@ -1,7 +1,6 @@
 const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
-const JavaScriptObfuscator = require('webpack-obfuscator');
-
+// const JavaScriptObfuscator = require('webpack-obfuscator');
 module.exports = {
   entry: {
     main: './src/js/analyzeColors.js',
@@ -49,15 +48,15 @@ module.exports = {
       },
     ],
   },
-  plugins: [
-    new JavaScriptObfuscator(
-      {
-        rotateStringArray: true,
-        stringArray: true,
-        stringArrayEncoding: ['rc4', 'base64'], // เข้ารหัส stream cipher และ string
-        stringArrayThreshold: 0.75, // เปอร์เซ็นต์ของ string ที่จะเข้ารหัส
-      },
-      []
-    ),
-  ],
+  // plugins: [
+  //   new JavaScriptObfuscator(
+  //     {
+  //       rotateStringArray: true,
+  //       stringArray: true,
+  //       stringArrayEncoding: ['rc4', 'base64'], // เข้ารหัส stream cipher และ string
+  //       stringArrayThreshold: 0.75, // เปอร์เซ็นต์ของ string ที่จะเข้ารหัส
+  //     },
+  //     []
+  //   ),
+  // ],
 };
