@@ -1,7 +1,7 @@
 {
   "name": "color-bandit-js",
   "version": "1.0.0",
-  "description": "ไลบรารีสำหรับคำนวณสีเฉลี่ยและพาเลตสีจากรูปภาพ",
+  "description": "Library for calculating average color and color palette from images.",
   "main": "dist/color-bandit.js",
   "scripts": {
     "build": "webpack"

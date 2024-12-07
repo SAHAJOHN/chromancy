@@ -69,7 +69,7 @@ function getAverageColorFromSampled(sampledPixels) {
 
 // ฟังก์ชันหลักสำหรับการวิเคราะห์สี
 // eslint-disable-next-line import/prefer-default-export
-export async function analyzeColors(imageElement, options = {}) {
+export async function colorBandit(imageElement, options = {}) {
   await loadImage(imageElement);
 
   const {

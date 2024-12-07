@@ -3,37 +3,31 @@ const TerserPlugin = require('terser-webpack-plugin');
 // const JavaScriptObfuscator = require('webpack-obfuscator');
 module.exports = {
   entry: {
-    main: './src/js/analyzeColors.js',
+    main: './src/js/main.js',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'color-bandit.js', // ใช้ชื่อไฟล์คงที่
-    chunkFilename: '[name].bundle.js', // สำหรับไฟล์ chunk
-    library: 'ColorBandit',
-    libraryTarget: 'umd', // เพื่อให้รองรับทั้ง CommonJS, AMD และ ES Modules
-    globalObject: 'this',
+    filename: 'color-bandit.js',
+    library: {
+      type: 'module',
+    },
+  },
+  experiments: {
+    outputModule: true,
   },
   mode: 'production',
   optimization: {
-    splitChunks: {
-      chunks: 'all',
-    },
     minimize: true,
     minimizer: [
       new TerserPlugin({
         terserOptions: {
-          mangle: {
-            toplevel: true, // ทำให้ตัวแปรและฟังก์ชันระดับบนสุดถูกย่อ
-          },
           compress: {
-            drop_console: true, // ลบ console.log
-            drop_debugger: true, // ลบ debugger
+            drop_console: true,
           },
           output: {
-            comments: false, // ลบคอมเมนต์ออกจากโค้ด
+            comments: false,
           },
         },
-        extractComments: false,
       }),
     ],
   },

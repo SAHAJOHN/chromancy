@@ -1,4 +1,4 @@
-# Image Color Analyzer
+# Color Bandit JS
 
 An image color analysis library that helps you extract the average color, dominant color, and a color palette from an image element. This library is useful for applications like image processing, theming, or any feature that requires color extraction from images.
 
@@ -8,18 +8,19 @@ An image color analysis library that helps you extract the average color, domina
 - **Dominant Color Detection**
 - **Color Palette Generation**
 
-## Installation
+[//]: # (## Installation)
 
-Include the module in your project by copying the code into your project files or importing it if available in a package manager.
+[//]: # ()
+[//]: # (Include the module in your project by copying the code into your project files or importing it if available in a package manager.)
 
 ## Usage
 
 ```javascript
-import { analyzeColors } from './path-to-your-library';
+import { colorBandit } from './path';
 
 const imageElement = document.getElementById('your-image-id');
 
-analyzeColors(imageElement, {
+colorBandit(imageElement, {
   maxSize: 100,
   quantizationLevel: 32,
   sampleRate: 0.1,
@@ -57,17 +58,17 @@ Here's an example demonstrating how to use the library in a basic HTML/JavaScrip
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Image Color Analyzer Example</title>
+  <title>ColorBandit Example</title>
 </head>
 <body>
   <img id="your-image-id" src="path-to-your-image.jpg" alt="Sample Image">
 
   <script type="module">
-    import { analyzeColors } from './path-to-your-library.js';
+    import { colorBandit } from './path.js';
 
     const imageElement = document.getElementById('your-image-id');
 
-    analyzeColors(imageElement, {
+    colorBandit(imageElement, {
       maxSize: 150,
       quantizationLevel: 16,
       sampleRate: 0.2,
@@ -94,7 +95,7 @@ Here's an example demonstrating how to use the library in a React application wi
 
 ```jsx
 import React, { useRef, useEffect } from 'react';
-import { analyzeColors } from './path-to-your-library';
+import { colorBandit } from './path';
 
 const ImageAnalyzer = () => {
   const imageRef = useRef(null);
@@ -104,7 +105,7 @@ const ImageAnalyzer = () => {
       if (!imageRef.current) return;
 
       try {
-        const result = await analyzeColors(imageRef.current, {
+        const result = await colorBandit(imageRef.current, {
           maxSize: 150,
           quantizationLevel: 16,
           sampleRate: 0.2,
