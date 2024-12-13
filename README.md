@@ -24,7 +24,8 @@ colorBandit(imageElement, {
   maxSize: 100,
   quantizationLevel: 32,
   sampleRate: 0.1,
-  paletteSize: 5,
+  paletteSize: 5, 
+  colorScale: 0,
 })
   .then((result) => {
     console.log('Average Color:', result.averageColor);
@@ -40,12 +41,13 @@ colorBandit(imageElement, {
 
 You can customize the color analysis by passing an `options` object to the `analyzeColors` function. The available options are:
 
-| Option             | Type   | Description                                                                                   | Default |
-|---------------------|--------|-----------------------------------------------------------------------------------------------|---------|
-| `maxSize`          | Number | The maximum width or height (in pixels) to which the image will be resized for analysis.      | `100`   |
-| `quantizationLevel`| Number | Determines the level of color quantization. A lower number increases the number of color bins.| `32`    |
-| `sampleRate`       | Number | The fraction of pixels to sample from the image (between `0` and `1`).                        | `0.1`   |
-| `paletteSize`      | Number | The number of distinct colors to include in the generated color palette.                      | `5`     |
+| Option             | Type   | Description                                                                                                                                                           | Default |
+|---------------------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| `maxSize`          | Number | The maximum width or height (in pixels) to which the image will be resized for analysis.                                                                              | `100`   |
+| `quantizationLevel`| Number | Determines the level of color quantization. A lower number increases the number of color bins (finer color detail), while a higher number reduces color precision.      | `32`    |
+| `sampleRate`       | Number | The fraction of pixels to sample from the image (between `0` and `1`). For example, `0.5` means half of the pixels will be sampled.                                     | `0.1`   |
+| `paletteSize`      | Number | The number of distinct colors to include in the generated color palette. If set to `0`, no palette array will be generated.                                             | `5`     |
+| `colorScale`       | Number | Adjusts the resulting colors by normalizing and scaling their intensity. A value of `0` means no scaling is applied, returning the original colors. Values greater than `0` will scale colors proportionally to their original ratios. | `0`     |
 
 ## Example
 
@@ -73,6 +75,7 @@ Here's an example demonstrating how to use the library in a basic HTML/JavaScrip
       quantizationLevel: 16,
       sampleRate: 0.2,
       paletteSize: 3,
+      colorScale: 0,
     })
       .then((result) => {
         console.log('Average Color:', result.averageColor);
@@ -110,6 +113,7 @@ const ImageAnalyzer = () => {
           quantizationLevel: 16,
           sampleRate: 0.2,
           paletteSize: 5,
+          colorScale: 0,
         });
 
         console.log('Average Color:', result.averageColor);

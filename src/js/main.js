@@ -13,12 +13,13 @@ function loadImage(imageElement) {
 }
 
 // ฟังก์ชันสำหรับปรับขนาดภาพ
-function getResizedImageData(imageElement, maxSize = 100) {
+function getResizedImageData(imageElement, maxSize) {
   // eslint-disable-next-line no-undef
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
 
-  const { naturalWidth: width, naturalHeight: height } = imageElement;
+  // const { naturalWidth: width, naturalHeight: height } = imageElement;
+  const { width, height } = imageElement;
   const scale = Math.min(maxSize / width, maxSize / height, 1);
 
   canvas.width = Math.floor(width * scale);
@@ -30,7 +31,7 @@ function getResizedImageData(imageElement, maxSize = 100) {
 }
 
 // ฟังก์ชันสำหรับสุ่มตัวอย่างพิกเซล
-function getSampledPixels(imageData, sampleRate = 0.1) {
+function getSampledPixels(imageData, sampleRate) {
   const sampledData = [];
   const totalPixels = imageData.data.length / 4;
   const step = Math.floor(1 / sampleRate);
@@ -67,6 +68,19 @@ function getAverageColorFromSampled(sampledPixels) {
   return `rgb(${avgRed}, ${avgGreen}, ${avgBlue})`;
 }
 
+// Normalizing
+function applyColorScale(color, colorScale) {
+  if (colorScale === 0) {
+    return color;
+  }
+  const [r, g, b] = color.match(/\d+/g).map(Number);
+  const totalColor = r + g + b;
+  const newR = Math.round((r / totalColor) * colorScale);
+  const newG = Math.round((g / totalColor) * colorScale);
+  const newB = Math.round((b / totalColor) * colorScale);
+  return `rgb(${newR}, ${newG}, ${newB})`;
+}
+
 // ฟังก์ชันหลักสำหรับการวิเคราะห์สี
 // eslint-disable-next-line import/prefer-default-export
 export async function colorBandit(imageElement, options = {}) {
@@ -75,15 +89,16 @@ export async function colorBandit(imageElement, options = {}) {
   const {
     maxSize = 100,
     quantizationLevel = 32,
-    sampleRate = 0.1,
-    paletteSize = 5,
+    sampleRate = 0.5,
+    paletteSize = 0,
+    colorScale = 0,
   } = options;
 
   const imageData = getResizedImageData(imageElement, maxSize);
   const sampledPixels = getSampledPixels(imageData, sampleRate);
   const colorMap = {};
 
-  // สร้างฮิสโตแกรมของสีจากพิกเซลที่สุ่มตัวอย่างมา
+  // สร้างฮิสโตแกรมของสีจากพิกเซลที่สุ่มตัวอย่าง
   sampledPixels.forEach((pixel) => {
     const r = Math.floor(pixel[0] / quantizationLevel) * quantizationLevel;
     const g = Math.floor(pixel[1] / quantizationLevel) * quantizationLevel;
@@ -104,7 +119,7 @@ export async function colorBandit(imageElement, options = {}) {
   }
   dominantColor = `rgb(${dominantColor})`;
 
-  // ฟังก์ชันคำนวณความแตกต่างของสี (Euclidean distance)
+  // ฟังก์ชันคำนวณความแตกต่างของสี
   function colorDifference(color1, color2) {
     const [r1, g1, b1] = color1.split(',').map(Number);
     const [r2, g2, b2] = color2.split(',').map(Number);
@@ -119,12 +134,10 @@ export async function colorBandit(imageElement, options = {}) {
   const distinctColors = [sortedColors[0]]; // เริ่มต้นด้วยสีที่เด่นที่สุด
 
   sortedColors.forEach((color) => {
-    if (distinctColors.length >= paletteSize) return; // เอาสีเท่าที่กำหนดใน paletteSize
-
+    if (distinctColors.length >= paletteSize) return;
     const isDistinct = distinctColors.every(
-      (distinctColor) => colorDifference(color, distinctColor) > 100 // ปรับค่านี้ตามต้องการ
+      (distinctColor) => colorDifference(color, distinctColor) > 100
     );
-
     if (isDistinct) {
       distinctColors.push(color);
     }
@@ -132,9 +145,19 @@ export async function colorBandit(imageElement, options = {}) {
 
   const palette = distinctColors.map((color) => `rgb(${color})`);
 
+  // นำสีที่ได้มาปรับสเกลสีด้วย colorScale ก่อนส่งกลับ
+  const adjustedAverageColor = applyColorScale(
+    getAverageColorFromSampled(sampledPixels),
+    colorScale
+  );
+  const adjustedDominantColor = applyColorScale(dominantColor, colorScale);
+  const adjustedPalette = palette.map((color) =>
+    applyColorScale(color, colorScale)
+  );
+
   return {
-    averageColor: getAverageColorFromSampled(sampledPixels),
-    dominantColor,
-    palette,
+    averageColor: adjustedAverageColor,
+    dominantColor: adjustedDominantColor,
+    palette: adjustedPalette,
   };
 }
