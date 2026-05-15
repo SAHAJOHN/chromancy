@@ -18,13 +18,13 @@ An image color analysis library that helps you extract the average color, domina
 ## Installation
 
 ```bash
-npm install color-bandit
+npm install chromancy
 ```
 
 Or with Yarn:
 
 ```bash
-yarn add color-bandit
+yarn add chromancy
 ```
 
 ---
@@ -32,7 +32,7 @@ yarn add color-bandit
 ## Usage
 
 ```javascript
-import { colorBandit } from 'color-bandit';
+import { colorBandit } from 'chromancy';
 
 // Option 1: Pass an HTMLImageElement
 const imageElement = document.getElementById('your-image-id');
@@ -92,7 +92,7 @@ const obj = await colorBandit(url, { paletteSize: 3, outputFormat: 'object' });
 ### Web Worker (No UI Blocking)
 
 ```javascript
-import { colorBanditWorker } from 'color-bandit';
+import { colorBanditWorker } from 'chromancy';
 
 const result = await colorBanditWorker('https://example.com/photo.jpg', {
   paletteSize: 5,
@@ -104,7 +104,7 @@ const result = await colorBanditWorker('https://example.com/photo.jpg', {
 ### Batch Processing
 
 ```javascript
-import { colorBanditBatch } from 'color-bandit';
+import { colorBanditBatch } from 'chromancy';
 
 const results = await colorBanditBatch(
   ['https://example.com/1.jpg', 'https://example.com/2.jpg'],
@@ -116,7 +116,7 @@ const results = await colorBanditBatch(
 ### Caching
 
 ```javascript
-import { colorBandit, clearCache } from 'color-bandit';
+import { colorBandit, clearCache } from 'chromancy';
 
 // First call — analyzes the image
 const result1 = await colorBandit('https://example.com/photo.jpg');
@@ -145,7 +145,7 @@ Here's an example demonstrating how to use the library in a basic HTML/JavaScrip
     <img id="your-image-id" src="path-to-your-image.jpg" alt="Sample Image" />
 
     <script type="module">
-      import { colorBandit } from './color-bandit.js';
+      import { colorBandit } from './chromancy.js';
 
       const imageElement = document.getElementById('your-image-id');
 
@@ -178,7 +178,7 @@ Here's an example demonstrating how to use the library in a React application wi
 
 ```jsx
 import React, { useRef, useEffect } from 'react';
-import { colorBandit } from 'color-bandit';
+import { colorBandit } from 'chromancy';
 
 const ImageAnalyzer = () => {
   const imageRef = useRef(null);
@@ -230,7 +230,7 @@ export default ImageAnalyzer;
 The library includes TypeScript declarations out of the box:
 
 ```typescript
-import { colorBandit, ColorBanditOptions } from 'color-bandit';
+import { colorBandit, ColorBanditOptions } from 'chromancy';
 
 const options: ColorBanditOptions = {
   maxSize: 150,
@@ -272,7 +272,7 @@ export default function ImageAnalyzer() {
       if (!imageRef.current) return;
 
       // Dynamic import — only runs in the browser
-      const { colorBandit } = await import('color-bandit');
+      const { colorBandit } = await import('chromancy');
 
       const result = await colorBandit(imageRef.current, {
         maxSize: 150,
