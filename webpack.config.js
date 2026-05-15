@@ -1,7 +1,11 @@
-const path = require('path');
-const TerserPlugin = require('terser-webpack-plugin');
-// const JavaScriptObfuscator = require('webpack-obfuscator');
-module.exports = {
+import path from 'path';
+import { fileURLToPath } from 'url';
+import TerserPlugin from 'terser-webpack-plugin';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default {
   entry: {
     main: './src/js/main.js',
   },
@@ -16,6 +20,7 @@ module.exports = {
     outputModule: true,
   },
   mode: 'production',
+  devtool: 'source-map',
   optimization: {
     minimize: true,
     minimizer: [
@@ -47,8 +52,8 @@ module.exports = {
   //     {
   //       rotateStringArray: true,
   //       stringArray: true,
-  //       stringArrayEncoding: ['rc4', 'base64'], // เข้ารหัส stream cipher และ string
-  //       stringArrayThreshold: 0.75, // เปอร์เซ็นต์ของ string ที่จะเข้ารหัส
+  //       stringArrayEncoding: ['rc4', 'base64'], // encode stream cipher and string
+  //       stringArrayThreshold: 0.75, // percentage of string to encode
   //     },
   //     []
   //   ),
