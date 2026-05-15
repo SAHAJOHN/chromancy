@@ -187,7 +187,6 @@ export function chromancy(
  * @param options - Optional configuration for the analysis.
  * @returns A promise that resolves to the color analysis result.
  */
-export function chromancyWorker(
   source: HTMLImageElement | string,
   options?: ChromancyOptions
 ): Promise<ChromancyResult>;

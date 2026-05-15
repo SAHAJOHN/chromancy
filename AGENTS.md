@@ -46,7 +46,7 @@ The library is published as an **ES Module** (`dist/chromancy.js`) and is intend
 chromancy/
 ├── src/
 │   ├── js/
-│   │   └── main.js          # Sole source file — exports chromancy, chromancyWorker, chromancyBatch
+│   │   └── main.js          # Sole source file — exports chromancy, chromancyBatch
 │   └── index.d.ts           # TypeScript declarations
 ├── dist/
 │   ├── chromancy.js      # Webpack bundle (ES module, minified, ~15KB)
@@ -87,7 +87,7 @@ There is one source file: `src/js/main.js`. It contains private helper functions
 | `convertResult` | Private | Converts full result to chosen format |
 | `getWorker` | Private | Creates/reuses inline Web Worker |
 | `chromancy` | **Public** | Async entry point. Accepts `HTMLImageElement \| string` |
-| `chromancyWorker` | **Public** | Web Worker variant with automatic fallback |
+
 | `chromancyBatch` | **Public** | Parallel multi-image processing |
 | `clearCache` | **Public** | Clears URL result cache |
 | `rgbToHex` | **Public** | Color converter: RGB → Hex |

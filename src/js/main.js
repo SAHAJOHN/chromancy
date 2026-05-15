@@ -493,10 +493,54 @@ export async function chromancy(imageElementOrUrl, options = {}) {
     return convertResult(cached, outputFormat);
   }
 
+  // Canvas operations must happen on the main thread
   const imageElement = resolveInput(imageElementOrUrl);
   await loadImage(imageElement);
-
   const imageData = getResizedImageData(imageElement, maxSize);
+
+  // Use Web Worker if available, otherwise fall back to main thread
+  if (typeof Worker !== 'undefined') {
+    const worker = getWorker();
+
+    return new Promise((resolve, reject) => {
+      const handleMessage = (e) => {
+        worker.removeEventListener('message', handleMessage);
+        worker.removeEventListener('error', handleError);
+
+        const result = e.data;
+
+        // Cache result for URL strings
+        if (cacheKey) {
+          urlCache.set(cacheKey, result);
+        }
+
+        resolve(convertResult(result, outputFormat));
+      };
+
+      const handleError = (err) => {
+        worker.removeEventListener('message', handleMessage);
+        worker.removeEventListener('error', handleError);
+        reject(err);
+      };
+
+      worker.addEventListener('message', handleMessage);
+      worker.addEventListener('error', handleError);
+
+      // Transfer the ArrayBuffer to the worker for zero-copy
+      const buffer = imageData.data.buffer;
+      worker.postMessage(
+        {
+          data: buffer,
+          width: imageData.width,
+          height: imageData.height,
+          options: { quantizationLevel, sampleRate, paletteSize, colorScale },
+        },
+        [buffer]
+      );
+    });
+  }
+
+  // Main thread fallback
   const analysis = analyzeImageData(imageData, quantizationLevel, sampleRate);
 
   // Build palette
@@ -533,74 +577,6 @@ export async function chromancy(imageElementOrUrl, options = {}) {
   }
 
   return convertResult(result, outputFormat);
-}
-
-// Web Worker version: offloads analysis to a worker thread
-export async function chromancyWorker(source, options = {}) {
-  // Fallback if Workers are not supported
-  if (typeof Worker === 'undefined') {
-    return chromancy(source, options);
-  }
-
-  const {
-    maxSize = 100,
-    quantizationLevel = 32,
-    sampleRate = 0.5,
-    paletteSize = 0,
-    colorScale = 0,
-    outputFormat = 'rgb',
-  } = options;
-
-  // Check cache for URL strings
-  const cacheKey = typeof source === 'string' ? source : null;
-  if (cacheKey && urlCache.has(cacheKey)) {
-    const cached = urlCache.get(cacheKey);
-    return convertResult(cached, outputFormat);
-  }
-
-  // Canvas operations must happen on the main thread
-  const imageElement = resolveInput(source);
-  await loadImage(imageElement);
-  const imageData = getResizedImageData(imageElement, maxSize);
-
-  const worker = getWorker();
-
-  return new Promise((resolve, reject) => {
-    const handleMessage = (e) => {
-      worker.removeEventListener('message', handleMessage);
-      worker.removeEventListener('error', handleError);
-
-      const result = e.data;
-
-      // Cache result for URL strings
-      if (cacheKey) {
-        urlCache.set(cacheKey, result);
-      }
-
-      resolve(convertResult(result, outputFormat));
-    };
-
-    const handleError = (err) => {
-      worker.removeEventListener('message', handleMessage);
-      worker.removeEventListener('error', handleError);
-      reject(err);
-    };
-
-    worker.addEventListener('message', handleMessage);
-    worker.addEventListener('error', handleError);
-
-    // Transfer the ArrayBuffer to the worker for zero-copy
-    const buffer = imageData.data.buffer;
-    worker.postMessage(
-      {
-        data: buffer,
-        width: imageData.width,
-        height: imageData.height,
-        options: { quantizationLevel, sampleRate, paletteSize, colorScale },
-      },
-      [buffer]
-    );
-  });
 }
 
 // Batch processing: analyze multiple images in parallel

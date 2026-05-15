@@ -13,7 +13,6 @@
 - [Quick Start](#quick-start)
 - [API Reference](#api-reference)
   - [`chromancy(source, options)`](#chromancysource-options)
-  - [`chromancyWorker(source, options)`](#chromancyworkersource-options)
   - [`chromancyBatch(sources, options)`](#chromancybatchsources-options)
   - [`clearCache()`](#clearcache)
   - [`rgbToHex(rgb)`](#rgbtohexrgb)
@@ -95,7 +94,6 @@ const result = await chromancy('https://example.com/photo.jpg', {
 });
 ```
 
-### `chromancyWorker(source, options)`
 
 Runs color analysis in a Web Worker to avoid blocking the main thread. Falls back to `chromancy()` if Web Workers are not supported.
 
@@ -104,9 +102,7 @@ Runs color analysis in a Web Worker to avoid blocking the main thread. Falls bac
 **Returns:** `Promise<ChromancyResult>`
 
 ```javascript
-import { chromancyWorker } from 'chromancy';
 
-const result = await chromancyWorker('https://example.com/photo.jpg', {
   paletteSize: 5,
 });
 ```
