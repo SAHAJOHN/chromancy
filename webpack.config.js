@@ -23,6 +23,7 @@ export default {
   devtool: false,
   optimization: {
     minimize: true,
+    usedExports: true,
     minimizer: [
       new TerserPlugin({
         terserOptions: {
