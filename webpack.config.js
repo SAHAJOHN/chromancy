@@ -33,6 +33,7 @@ export default {
             comments: false,
           },
         },
+        extractComments: false,
       }),
     ],
   },
