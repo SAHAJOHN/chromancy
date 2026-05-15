@@ -11,7 +11,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "webpack && npm run copy:types",
+    "build": "webpack && yarn copy:types",
     "copy:types": "cp src/index.d.ts dist/index.d.ts",
     "watch": "webpack --watch",
     "dev": "webpack --watch --mode development",
