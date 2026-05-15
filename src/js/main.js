@@ -8,6 +8,194 @@ export function clearCache() {
   urlCache.clear();
 }
 
+// Worker code (inline to avoid separate file dependency)
+const workerScript = `
+// Compute lightness from RGB (0-1)
+function getLightness(r, g, b) {
+  const max = Math.max(r, g, b) / 255;
+  const min = Math.min(r, g, b) / 255;
+  return (max + min) / 2;
+}
+
+// Compute saturation from RGB (0-1)
+function getSaturation(r, g, b) {
+  const max = Math.max(r, g, b) / 255;
+  const min = Math.min(r, g, b) / 255;
+  const diff = max - min;
+  if (diff === 0) return 0;
+  const l = (max + min) / 2;
+  return l > 0.5 ? diff / (2 - max - min) : diff / (max + min);
+}
+
+// Compute hue from RGB (0-360)
+function getHue(r, g, b) {
+  const rNorm = r / 255;
+  const gNorm = g / 255;
+  const bNorm = b / 255;
+  const max = Math.max(rNorm, gNorm, bNorm);
+  const min = Math.min(rNorm, gNorm, bNorm);
+  const diff = max - min;
+
+  if (diff === 0) return 0;
+
+  let h = 0;
+  switch (max) {
+    case rNorm:
+      h = ((gNorm - bNorm) / diff + (gNorm < bNorm ? 6 : 0)) / 6;
+      break;
+    case gNorm:
+      h = ((bNorm - rNorm) / diff + 2) / 6;
+      break;
+    case bNorm:
+      h = ((rNorm - gNorm) / diff + 4) / 6;
+      break;
+  }
+
+  return h * 360;
+}
+
+// Single-pass analysis
+function analyzeImageData(imageData, quantizationLevel, sampleRate) {
+  const data = imageData.data;
+  const totalPixels = data.length / 4;
+  const step = Math.floor(1 / sampleRate);
+
+  let totalRed = 0;
+  let totalGreen = 0;
+  let totalBlue = 0;
+  let sampledCount = 0;
+
+  let totalLightness = 0;
+  let totalSaturation = 0;
+  let warmCount = 0;
+  let minLightness = 1;
+  let maxLightness = 0;
+
+  const colorMap = {};
+
+  for (let i = 0; i < totalPixels; i += step) {
+    const index = i * 4;
+    const r = data[index];
+    const g = data[index + 1];
+    const b = data[index + 2];
+    const a = data[index + 3];
+
+    if (a === 0) continue;
+
+    totalRed += r;
+    totalGreen += g;
+    totalBlue += b;
+    sampledCount++;
+
+    const lightness = getLightness(r, g, b);
+    totalLightness += lightness;
+    totalSaturation += getSaturation(r, g, b);
+
+    if (lightness < minLightness) minLightness = lightness;
+    if (lightness > maxLightness) maxLightness = lightness;
+
+    const hue = getHue(r, g, b);
+    if (hue >= 330 || hue <= 60) {
+      warmCount++;
+    }
+
+    const qr = Math.floor(r / quantizationLevel) * quantizationLevel;
+    const qg = Math.floor(g / quantizationLevel) * quantizationLevel;
+    const qb = Math.floor(b / quantizationLevel) * quantizationLevel;
+    const key = qr + ',' + qg + ',' + qb;
+    colorMap[key] = (colorMap[key] || 0) + 1;
+  }
+
+  let dominantColor = null;
+  let maxCount = 0;
+  const entries = [];
+
+  for (const color in colorMap) {
+    const count = colorMap[color];
+    if (count > maxCount) {
+      maxCount = count;
+      dominantColor = color;
+    }
+    entries.push({ color, count });
+  }
+
+  entries.sort((a, b) => b.count - a.count);
+  const sortedColors = entries.map((e) => e.color);
+
+  const properties = sampledCount > 0
+    ? {
+        brightness: Math.round((totalLightness / sampledCount) * 100) / 100,
+        warmth: Math.round((warmCount / sampledCount) * 100) / 100,
+        saturation: Math.round((totalSaturation / sampledCount) * 100) / 100,
+        contrast: Math.round((maxLightness - minLightness) * 100) / 100,
+      }
+    : { brightness: 0, warmth: 0, saturation: 0, contrast: 0 };
+
+  return {
+    averageColor: 'rgb(' + Math.round(totalRed / sampledCount) + ',' + Math.round(totalGreen / sampledCount) + ',' + Math.round(totalBlue / sampledCount) + ')',
+    dominantColor: 'rgb(' + dominantColor + ')',
+    sortedColors,
+    properties,
+  };
+}
+
+// Color difference
+function colorDifference(color1, color2) {
+  const [r1, g1, b1] = color1.split(',').map(Number);
+  const [r2, g2, b2] = color2.split(',').map(Number);
+  return Math.sqrt((r2 - r1) ** 2 + (g2 - g1) ** 2 + (b2 - b1) ** 2);
+}
+
+// Apply color scale
+function applyColorScale(color, colorScale) {
+  if (colorScale === 0) return color;
+  const [r, g, b] = color.match(/\\d+/g).map(Number);
+  const totalColor = r + g + b;
+  return 'rgb(' + Math.round((r / totalColor) * colorScale) + ',' + Math.round((g / totalColor) * colorScale) + ',' + Math.round((b / totalColor) * colorScale) + ')';
+}
+
+self.onmessage = function (e) {
+  const { data, width, height, options } = e.data;
+  const imageData = { data: new Uint8ClampedArray(data), width, height };
+  const analysis = analyzeImageData(imageData, options.quantizationLevel, options.sampleRate);
+
+  // Build palette
+  let palette = [];
+  if (options.paletteSize > 0 && analysis.sortedColors.length > 0) {
+    const distinctColors = [analysis.sortedColors[0]];
+    for (let i = 1; i < analysis.sortedColors.length; i++) {
+      if (distinctColors.length >= options.paletteSize) break;
+      const color = analysis.sortedColors[i];
+      const isDistinct = distinctColors.every(
+        (dc) => colorDifference(color, dc) > 100
+      );
+      if (isDistinct) distinctColors.push(color);
+    }
+    palette = distinctColors.map((color) => 'rgb(' + color + ')');
+  }
+
+  // Apply color scale
+  const result = {
+    averageColor: applyColorScale(analysis.averageColor, options.colorScale),
+    dominantColor: applyColorScale(analysis.dominantColor, options.colorScale),
+    palette: palette.map((color) => applyColorScale(color, options.colorScale)),
+    properties: analysis.properties,
+  };
+
+  self.postMessage(result);
+};
+`;
+
+let workerInstance = null;
+
+function getWorker() {
+  if (!workerInstance) {
+    const blob = new Blob([workerScript], { type: 'application/javascript' });
+    workerInstance = new Worker(URL.createObjectURL(blob));
+  }
+  return workerInstance;
+}
+
 // Resolve input to HTMLImageElement (supports string URL or HTMLImageElement)
 function resolveInput(input) {
   if (typeof input === 'string') {
@@ -345,6 +533,74 @@ export async function colorBandit(imageElementOrUrl, options = {}) {
   }
 
   return convertResult(result, outputFormat);
+}
+
+// Web Worker version: offloads analysis to a worker thread
+export async function colorBanditWorker(source, options = {}) {
+  // Fallback if Workers are not supported
+  if (typeof Worker === 'undefined') {
+    return colorBandit(source, options);
+  }
+
+  const {
+    maxSize = 100,
+    quantizationLevel = 32,
+    sampleRate = 0.5,
+    paletteSize = 0,
+    colorScale = 0,
+    outputFormat = 'rgb',
+  } = options;
+
+  // Check cache for URL strings
+  const cacheKey = typeof source === 'string' ? source : null;
+  if (cacheKey && urlCache.has(cacheKey)) {
+    const cached = urlCache.get(cacheKey);
+    return convertResult(cached, outputFormat);
+  }
+
+  // Canvas operations must happen on the main thread
+  const imageElement = resolveInput(source);
+  await loadImage(imageElement);
+  const imageData = getResizedImageData(imageElement, maxSize);
+
+  const worker = getWorker();
+
+  return new Promise((resolve, reject) => {
+    const handleMessage = (e) => {
+      worker.removeEventListener('message', handleMessage);
+      worker.removeEventListener('error', handleError);
+
+      const result = e.data;
+
+      // Cache result for URL strings
+      if (cacheKey) {
+        urlCache.set(cacheKey, result);
+      }
+
+      resolve(convertResult(result, outputFormat));
+    };
+
+    const handleError = (err) => {
+      worker.removeEventListener('message', handleMessage);
+      worker.removeEventListener('error', handleError);
+      reject(err);
+    };
+
+    worker.addEventListener('message', handleMessage);
+    worker.addEventListener('error', handleError);
+
+    // Transfer the ArrayBuffer to the worker for zero-copy
+    const buffer = imageData.data.buffer;
+    worker.postMessage(
+      {
+        data: buffer,
+        width: imageData.width,
+        height: imageData.height,
+        options: { quantizationLevel, sampleRate, paletteSize, colorScale },
+      },
+      [buffer]
+    );
+  });
 }
 
 // Batch processing: analyze multiple images in parallel

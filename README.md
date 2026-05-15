@@ -7,8 +7,13 @@ An image color analysis library that helps you extract the average color, domina
 - **Average Color Calculation**
 - **Dominant Color Detection**
 - **Color Palette Generation**
+- **Image Properties** — Extract brightness, warmth, saturation, and contrast
 - **URL String Support** — Pass an image URL directly without creating an `<img>` element
 - **Multiple Output Formats** — Get colors as `rgb`, `hex`, `hsl`, or `{ r, g, b }` objects
+- **Alpha Channel Support** — Automatically skips fully transparent pixels
+- **URL Caching** — Avoid re-analyzing the same image URL
+- **Batch Processing** — Analyze multiple images in parallel
+- **Web Worker Support** — Offload heavy analysis to a worker thread (no UI blocking)
 
 ## Installation
 
@@ -76,6 +81,8 @@ const result = await colorBandit('https://example.com/photo.jpg', {
 console.log('Average Color:', result.averageColor);
 console.log('Dominant Color:', result.dominantColor);
 console.log('Color Palette:', result.palette);
+console.log('Properties:', result.properties);
+// Properties: { brightness: 0.72, warmth: 0.85, saturation: 0.65, contrast: 0.45 }
 ```
 
 > **Important:** This library uses browser DOM APIs (`canvas`, `document`). It **only works in the browser** and cannot be used in Node.js.
@@ -98,7 +105,7 @@ You can customize the color analysis by passing an `options` object to the `anal
 ```javascript
 // RGB (default)
 const rgb = await colorBandit(url, { paletteSize: 3 });
-// rgb.averageColor  -> "rgb(128, 64, 32)"
+// rgb.averageColor  -> "rgb(128,64,32)"
 
 // Hex
 const hex = await colorBandit(url, { paletteSize: 3, outputFormat: 'hex' });
@@ -106,11 +113,50 @@ const hex = await colorBandit(url, { paletteSize: 3, outputFormat: 'hex' });
 
 // HSL
 const hsl = await colorBandit(url, { paletteSize: 3, outputFormat: 'hsl' });
-// hsl.averageColor  -> "hsl(20, 43%, 31%)"
+// hsl.averageColor  -> "hsl(20,43%,31%)"
 
 // Object
 const obj = await colorBandit(url, { paletteSize: 3, outputFormat: 'object' });
 // obj.averageColor  -> { r: 128, g: 64, b: 32 }
+```
+
+### Web Worker (No UI Blocking)
+
+```javascript
+import { colorBanditWorker } from 'color-bandit-js';
+
+const result = await colorBanditWorker('https://example.com/photo.jpg', {
+  paletteSize: 5,
+});
+// Same result as colorBandit(), but runs in a Web Worker
+// Falls back to main thread if Workers are not supported
+```
+
+### Batch Processing
+
+```javascript
+import { colorBanditBatch } from 'color-bandit-js';
+
+const results = await colorBanditBatch(
+  ['https://example.com/1.jpg', 'https://example.com/2.jpg'],
+  { paletteSize: 5 }
+);
+// results = [result1, result2]
+```
+
+### Caching
+
+```javascript
+import { colorBandit, clearCache } from 'color-bandit-js';
+
+// First call — analyzes the image
+const result1 = await colorBandit('https://example.com/photo.jpg');
+
+// Second call — returns cached result instantly
+const result2 = await colorBandit('https://example.com/photo.jpg');
+
+// Clear cache when needed
+clearCache();
 ```
 
 ## Example
@@ -226,9 +272,10 @@ const options: ColorBanditOptions = {
 };
 
 const result = await colorBandit('https://example.com/photo.jpg', options);
-// result.averageColor  -> string (e.g., "#804020")
-// result.dominantColor -> string
-// result.palette       -> string[]
+// result.averageColor   -> string (e.g., "#804020")
+// result.dominantColor  -> string
+// result.palette        -> string[]
+// result.properties     -> { brightness, warmth, saturation, contrast }
 
 // With outputFormat: 'object'
 const objResult = await colorBandit(imageElement, {
@@ -236,6 +283,7 @@ const objResult = await colorBandit(imageElement, {
   outputFormat: 'object',
 });
 // objResult.averageColor -> { r: 128, g: 64, b: 32 }
+// objResult.properties   -> { brightness: 0.72, warmth: 0.85, ... }
 ```
 
 ### Next.js

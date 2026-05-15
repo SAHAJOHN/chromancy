@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   colorBandit,
   colorBanditBatch,
+  colorBanditWorker,
   clearCache,
   rgbToHex,
   rgbToHsl,
@@ -583,6 +584,35 @@ describe('colorBandit', () => {
       expect(results.length).toBe(2);
       expect(results[0]).toHaveProperty('averageColor');
       expect(results[1]).toHaveProperty('averageColor');
+    });
+  });
+
+  describe('worker', () => {
+    it('should be defined', () => {
+      expect(colorBanditWorker).toBeDefined();
+      expect(typeof colorBanditWorker).toBe('function');
+    });
+
+    it('should fallback to main thread when Worker is not supported', async () => {
+      // jsdom does not support Worker, so it should fallback
+      const fakeImage = {
+        complete: true,
+        naturalWidth: 4,
+        width: 4,
+        height: 4,
+      };
+
+      const result = await colorBanditWorker(fakeImage, {
+        maxSize: 100,
+        quantizationLevel: 1,
+        sampleRate: 1.0,
+        paletteSize: 0,
+      });
+
+      expect(result).toHaveProperty('averageColor');
+      expect(result).toHaveProperty('dominantColor');
+      expect(result).toHaveProperty('palette');
+      expect(result).toHaveProperty('properties');
     });
   });
 });

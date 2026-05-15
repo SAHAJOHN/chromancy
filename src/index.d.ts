@@ -178,6 +178,21 @@ export function colorBandit(
 ): Promise<ColorBanditObjectResult>;
 
 /**
+ * Web Worker version: offloads color analysis to a worker thread
+ * to avoid blocking the main UI thread.
+ *
+ * Falls back to `colorBandit()` if Web Workers are not supported.
+ *
+ * @param source - An HTMLImageElement or a string URL.
+ * @param options - Optional configuration for the analysis.
+ * @returns A promise that resolves to the color analysis result.
+ */
+export function colorBanditWorker(
+  source: HTMLImageElement | string,
+  options?: ColorBanditOptions
+): Promise<ColorBanditResult>;
+
+/**
  * Batch processing: analyze multiple images in parallel.
  *
  * @param sources - Array of HTMLImageElements or string URLs.
