@@ -1,6 +1,6 @@
 {
   "name": "color-bandit",
-  "version": "1.0.3",
+  "version": "1.0.0",
   "description": "Library for calculating average color and color palette from images.",
   "type": "module",
   "sideEffects": false,
