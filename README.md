@@ -27,27 +27,6 @@ Or with Yarn:
 yarn add color-bandit-js
 ```
 
-### Development (`npm link`)
-
-If you're contributing to this library, you can link it locally:
-
-In the library folder:
-
-```bash
-cd /path/to/color-bandit-js
-npm link
-```
-
-In your project folder:
-
-```bash
-npm link color-bandit-js
-```
-- `color-bandit.js.map`
-- `index.d.ts`
-
-Then import from the copied location.
-
 ---
 
 ## Usage
