@@ -1,3 +1,13 @@
+// Cache for URL-based results
+const urlCache = new Map();
+
+/**
+ * Clear the URL cache.
+ */
+export function clearCache() {
+  urlCache.clear();
+}
+
 // Resolve input to HTMLImageElement (supports string URL or HTMLImageElement)
 function resolveInput(input) {
   if (typeof input === 'string') {
@@ -36,7 +46,53 @@ function getResizedImageData(imageElement, maxSize) {
   return ctx.getImageData(0, 0, canvas.width, canvas.height);
 }
 
-// Single-pass analysis: compute average + color histogram in one loop
+// Compute lightness from RGB (0-1)
+function getLightness(r, g, b) {
+  const max = Math.max(r, g, b) / 255;
+  const min = Math.min(r, g, b) / 255;
+  return (max + min) / 2;
+}
+
+// Compute saturation from RGB (0-1)
+function getSaturation(r, g, b) {
+  const max = Math.max(r, g, b) / 255;
+  const min = Math.min(r, g, b) / 255;
+  const diff = max - min;
+  if (diff === 0) return 0;
+  const l = (max + min) / 2;
+  return l > 0.5 ? diff / (2 - max - min) : diff / (max + min);
+}
+
+// Compute hue from RGB (0-360)
+function getHue(r, g, b) {
+  const rNorm = r / 255;
+  const gNorm = g / 255;
+  const bNorm = b / 255;
+  const max = Math.max(rNorm, gNorm, bNorm);
+  const min = Math.min(rNorm, gNorm, bNorm);
+  const diff = max - min;
+
+  if (diff === 0) return 0;
+
+  let h = 0;
+  switch (max) {
+    case rNorm:
+      h = ((gNorm - bNorm) / diff + (gNorm < bNorm ? 6 : 0)) / 6;
+      break;
+    case gNorm:
+      h = ((bNorm - rNorm) / diff + 2) / 6;
+      break;
+    case bNorm:
+      h = ((rNorm - gNorm) / diff + 4) / 6;
+      break;
+    default:
+      break;
+  }
+
+  return h * 360;
+}
+
+// Single-pass analysis: compute average + color histogram + properties in one loop
 function analyzeImageData(imageData, quantizationLevel, sampleRate) {
   const data = imageData.data;
   const totalPixels = data.length / 4;
@@ -46,6 +102,14 @@ function analyzeImageData(imageData, quantizationLevel, sampleRate) {
   let totalGreen = 0;
   let totalBlue = 0;
   let sampledCount = 0;
+
+  // Properties tracking
+  let totalLightness = 0;
+  let totalSaturation = 0;
+  let warmCount = 0;
+  let minLightness = 1;
+  let maxLightness = 0;
+
   const colorMap = {};
 
   for (let i = 0; i < totalPixels; i += step) {
@@ -53,12 +117,31 @@ function analyzeImageData(imageData, quantizationLevel, sampleRate) {
     const r = data[index];
     const g = data[index + 1];
     const b = data[index + 2];
+    const a = data[index + 3];
+
+    // Skip fully transparent pixels
+    if (a === 0) continue;
 
     totalRed += r;
     totalGreen += g;
     totalBlue += b;
     sampledCount++;
 
+    // Compute properties
+    const lightness = getLightness(r, g, b);
+    totalLightness += lightness;
+    totalSaturation += getSaturation(r, g, b);
+
+    if (lightness < minLightness) minLightness = lightness;
+    if (lightness > maxLightness) maxLightness = lightness;
+
+    const hue = getHue(r, g, b);
+    // Warm hues: red-orange-yellow (330-360, 0-60)
+    if (hue >= 330 || hue <= 60) {
+      warmCount++;
+    }
+
+    // Quantize for color map
     const qr = Math.floor(r / quantizationLevel) * quantizationLevel;
     const qg = Math.floor(g / quantizationLevel) * quantizationLevel;
     const qb = Math.floor(b / quantizationLevel) * quantizationLevel;
@@ -82,10 +165,27 @@ function analyzeImageData(imageData, quantizationLevel, sampleRate) {
   entries.sort((a, b) => b.count - a.count);
   const sortedColors = entries.map((e) => e.color);
 
+  // Calculate properties
+  const properties =
+    sampledCount > 0
+      ? {
+          brightness: Math.round((totalLightness / sampledCount) * 100) / 100,
+          warmth: Math.round((warmCount / sampledCount) * 100) / 100,
+          saturation: Math.round((totalSaturation / sampledCount) * 100) / 100,
+          contrast: Math.round((maxLightness - minLightness) * 100) / 100,
+        }
+      : {
+          brightness: 0,
+          warmth: 0,
+          saturation: 0,
+          contrast: 0,
+        };
+
   return {
     averageColor: `rgb(${Math.round(totalRed / sampledCount)},${Math.round(totalGreen / sampledCount)},${Math.round(totalBlue / sampledCount)})`,
     dominantColor: `rgb(${dominantColor})`,
     sortedColors,
+    properties,
   };
 }
 
@@ -152,7 +252,7 @@ export function rgbToHsl(rgb) {
   const sPct = Math.round(s * 100);
   const lPct = Math.round(l * 100);
 
-  return `hsl(${hDeg}, ${sPct}%, ${lPct}%)`;
+  return `hsl(${hDeg},${sPct}%,${lPct}%)`;
 }
 
 export function rgbToObject(rgb) {
@@ -182,14 +282,12 @@ function convertResult(result, format) {
     averageColor: convertColor(result.averageColor, format),
     dominantColor: convertColor(result.dominantColor, format),
     palette: result.palette.map((color) => convertColor(color, format)),
+    properties: result.properties,
   };
 }
 
 // Main function for color analysis
 export async function colorBandit(imageElementOrUrl, options = {}) {
-  const imageElement = resolveInput(imageElementOrUrl);
-  await loadImage(imageElement);
-
   const {
     maxSize = 100,
     quantizationLevel = 32,
@@ -198,6 +296,17 @@ export async function colorBandit(imageElementOrUrl, options = {}) {
     colorScale = 0,
     outputFormat = 'rgb',
   } = options;
+
+  // Check cache for URL strings
+  const cacheKey =
+    typeof imageElementOrUrl === 'string' ? imageElementOrUrl : null;
+  if (cacheKey && urlCache.has(cacheKey)) {
+    const cached = urlCache.get(cacheKey);
+    return convertResult(cached, outputFormat);
+  }
+
+  const imageElement = resolveInput(imageElementOrUrl);
+  await loadImage(imageElement);
 
   const imageData = getResizedImageData(imageElement, maxSize);
   const analysis = analyzeImageData(imageData, quantizationLevel, sampleRate);
@@ -227,7 +336,19 @@ export async function colorBandit(imageElementOrUrl, options = {}) {
     averageColor: applyColorScale(analysis.averageColor, colorScale),
     dominantColor: applyColorScale(analysis.dominantColor, colorScale),
     palette: palette.map((color) => applyColorScale(color, colorScale)),
+    properties: analysis.properties,
   };
 
+  // Cache result for URL strings
+  if (cacheKey) {
+    urlCache.set(cacheKey, result);
+  }
+
   return convertResult(result, outputFormat);
+}
+
+// Batch processing: analyze multiple images in parallel
+export async function colorBanditBatch(sources, options = {}) {
+  const promises = sources.map((source) => colorBandit(source, options));
+  return Promise.all(promises);
 }

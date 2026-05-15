@@ -1,4 +1,21 @@
 /**
+ * Image properties extracted during color analysis.
+ */
+export interface ImageProperties {
+  /** Average lightness of the image (0 = dark, 1 = bright). */
+  brightness: number;
+
+  /** Ratio of warm hues (red-orange-yellow) to total pixels (0 = cool, 1 = warm). */
+  warmth: number;
+
+  /** Average saturation of the image (0 = grayscale, 1 = vivid). */
+  saturation: number;
+
+  /** Difference between the lightest and darkest pixels (0 = flat, 1 = high contrast). */
+  contrast: number;
+}
+
+/**
  * Options for the colorBandit function.
  */
 export interface ColorBanditOptions {
@@ -39,9 +56,9 @@ export interface ColorBanditOptions {
 
   /**
    * The output format for returned colors.
-   * - `'rgb'` returns strings like `"rgb(128, 64, 32)"`
+   * - `'rgb'` returns strings like `"rgb(128,64,32)"`
    * - `'hex'` returns strings like `"#804020"`
-   * - `'hsl'` returns strings like `"hsl(20, 43%, 31%)"`
+   * - `'hsl'` returns strings like `"hsl(20,43%,31%)"`
    * - `'object'` returns objects like `{ r: 128, g: 64, b: 32 }`
    * @default 'rgb'
    */
@@ -52,7 +69,7 @@ export interface ColorBanditOptions {
  * RGB color result returned by the colorBandit function.
  */
 export interface ColorBanditResult {
-  /** The average color of the image as an RGB string (e.g., "rgb(128, 64, 32)"). */
+  /** The average color of the image as an RGB string (e.g., "rgb(128,64,32)"). */
   averageColor: string;
 
   /** The dominant (most frequent) color of the image as an RGB string. */
@@ -60,6 +77,9 @@ export interface ColorBanditResult {
 
   /** An array of distinct colors in the palette as RGB strings. Empty if paletteSize is 0. */
   palette: string[];
+
+  /** Image properties (brightness, warmth, saturation, contrast). */
+  properties: ImageProperties;
 }
 
 /**
@@ -74,13 +94,16 @@ export interface ColorBanditHexResult {
 
   /** An array of distinct colors in the palette as hex strings. Empty if paletteSize is 0. */
   palette: string[];
+
+  /** Image properties (brightness, warmth, saturation, contrast). */
+  properties: ImageProperties;
 }
 
 /**
  * HSL color result returned by the colorBandit function.
  */
 export interface ColorBanditHslResult {
-  /** The average color of the image as an HSL string (e.g., "hsl(20, 43%, 31%)"). */
+  /** The average color of the image as an HSL string (e.g., "hsl(20,43%,31%)"). */
   averageColor: string;
 
   /** The dominant (most frequent) color of the image as an HSL string. */
@@ -88,6 +111,9 @@ export interface ColorBanditHslResult {
 
   /** An array of distinct colors in the palette as HSL strings. Empty if paletteSize is 0. */
   palette: string[];
+
+  /** Image properties (brightness, warmth, saturation, contrast). */
+  properties: ImageProperties;
 }
 
 /**
@@ -102,6 +128,9 @@ export interface ColorBanditObjectResult {
 
   /** An array of distinct colors in the palette as RGB objects. Empty if paletteSize is 0. */
   palette: { r: number; g: number; b: number }[];
+
+  /** Image properties (brightness, warmth, saturation, contrast). */
+  properties: ImageProperties;
 }
 
 /**
@@ -125,6 +154,7 @@ export interface ColorBanditObjectResult {
  *   outputFormat: 'hex',
  * });
  * console.log(result.averageColor);  // "#804020"
+ * console.log(result.properties.brightness);  // 0.72
  * ```
  */
 export function colorBandit(
@@ -146,3 +176,20 @@ export function colorBandit(
   source: HTMLImageElement | string,
   options: ColorBanditOptions & { outputFormat: 'object' }
 ): Promise<ColorBanditObjectResult>;
+
+/**
+ * Batch processing: analyze multiple images in parallel.
+ *
+ * @param sources - Array of HTMLImageElements or string URLs.
+ * @param options - Optional configuration applied to all images.
+ * @returns A promise that resolves to an array of color analysis results.
+ */
+export function colorBanditBatch(
+  sources: (HTMLImageElement | string)[],
+  options?: ColorBanditOptions
+): Promise<ColorBanditResult[]>;
+
+/**
+ * Clear the URL-based result cache.
+ */
+export function clearCache(): void;

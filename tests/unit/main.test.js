@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   colorBandit,
+  colorBanditBatch,
+  clearCache,
   rgbToHex,
   rgbToHsl,
   rgbToObject,
@@ -87,6 +89,7 @@ describe('colorBandit', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     mockImageInstances = [];
+    clearCache();
   });
 
   describe('basic', () => {
@@ -376,7 +379,7 @@ describe('colorBandit', () => {
 
       expect(result.averageColor.startsWith('hsl(')).toBe(true);
       expect(result.dominantColor.startsWith('hsl(')).toBe(true);
-      expect(result.averageColor).toMatch(/hsl\(\d+, \d+%?, \d+%?\)/);
+      expect(result.averageColor).toMatch(/hsl\(\d+,\s*\d+%?,\s*\d+%?\)/);
     });
 
     it('should return objects when outputFormat is object', async () => {
@@ -409,42 +412,215 @@ describe('colorBandit', () => {
       expect(result.palette[0].startsWith('#')).toBe(true);
     });
   });
+
+  describe('properties', () => {
+    it('should return image properties for a solid red image', async () => {
+      mockImageData = createMockImageData([[255, 0, 0, 255]], 4, 4);
+
+      const fakeImage = {
+        complete: true,
+        naturalWidth: 4,
+        width: 4,
+        height: 4,
+      };
+
+      const result = await colorBandit(fakeImage, {
+        maxSize: 100,
+        quantizationLevel: 1,
+        sampleRate: 1.0,
+        paletteSize: 0,
+      });
+
+      expect(result.properties).toBeDefined();
+      expect(result.properties.brightness).toBeGreaterThan(0);
+      expect(result.properties.brightness).toBeLessThanOrEqual(1);
+      expect(result.properties.warmth).toBe(1);
+      expect(result.properties.saturation).toBe(1);
+      expect(result.properties.contrast).toBe(0);
+    });
+
+    it('should return low warmth for a blue image', async () => {
+      mockImageData = createMockImageData([[0, 0, 255, 255]], 4, 4);
+
+      const fakeImage = {
+        complete: true,
+        naturalWidth: 4,
+        width: 4,
+        height: 4,
+      };
+
+      const result = await colorBandit(fakeImage, {
+        maxSize: 100,
+        quantizationLevel: 1,
+        sampleRate: 1.0,
+        paletteSize: 0,
+      });
+
+      expect(result.properties.warmth).toBe(0);
+    });
+
+    it('should return high contrast for black and white image', async () => {
+      mockImageData = createMockImageData(
+        [
+          [0, 0, 0, 255],
+          [255, 255, 255, 255],
+        ],
+        2,
+        2
+      );
+
+      const fakeImage = {
+        complete: true,
+        naturalWidth: 2,
+        width: 2,
+        height: 2,
+      };
+
+      const result = await colorBandit(fakeImage, {
+        maxSize: 100,
+        quantizationLevel: 1,
+        sampleRate: 1.0,
+        paletteSize: 0,
+      });
+
+      expect(result.properties.contrast).toBe(1);
+    });
+  });
+
+  describe('alpha channel', () => {
+    it('should skip fully transparent pixels', async () => {
+      mockImageData = createMockImageData(
+        [
+          [255, 0, 0, 255],
+          [0, 0, 255, 0],
+        ],
+        2,
+        1
+      );
+
+      const fakeImage = {
+        complete: true,
+        naturalWidth: 2,
+        width: 2,
+        height: 1,
+      };
+
+      const result = await colorBandit(fakeImage, {
+        maxSize: 100,
+        quantizationLevel: 1,
+        sampleRate: 1.0,
+        paletteSize: 0,
+      });
+
+      expect(result.averageColor).toBe('rgb(255,0,0)');
+      expect(result.dominantColor).toBe('rgb(255,0,0)');
+    });
+  });
+
+  describe('caching', () => {
+    it('should cache results for URL strings', async () => {
+      const testUrl = 'https://example.com/cached.jpg';
+
+      const promise1 = colorBandit(testUrl, {
+        maxSize: 100,
+        sampleRate: 1.0,
+        paletteSize: 0,
+      });
+      mockImageInstances[0]._triggerLoad();
+      const result1 = await promise1;
+
+      const result2 = await colorBandit(testUrl, {
+        maxSize: 100,
+        sampleRate: 1.0,
+        paletteSize: 0,
+      });
+
+      expect(mockImageInstances.length).toBe(1);
+      expect(result2).toEqual(result1);
+    });
+
+    it('should clear cache when clearCache is called', async () => {
+      const testUrl = 'https://example.com/clear.jpg';
+
+      const promise1 = colorBandit(testUrl, {
+        maxSize: 100,
+        sampleRate: 1.0,
+        paletteSize: 0,
+      });
+      mockImageInstances[0]._triggerLoad();
+      await promise1;
+
+      clearCache();
+
+      const promise2 = colorBandit(testUrl, {
+        maxSize: 100,
+        sampleRate: 1.0,
+        paletteSize: 0,
+      });
+      mockImageInstances[1]._triggerLoad();
+      await promise2;
+
+      expect(mockImageInstances.length).toBe(2);
+    });
+  });
+
+  describe('batch processing', () => {
+    it('should analyze multiple images in parallel', async () => {
+      const urls = ['https://example.com/1.jpg', 'https://example.com/2.jpg'];
+
+      const promise = colorBanditBatch(urls, {
+        maxSize: 100,
+        sampleRate: 1.0,
+        paletteSize: 0,
+      });
+
+      mockImageInstances[0]._triggerLoad();
+      mockImageInstances[1]._triggerLoad();
+
+      const results = await promise;
+
+      expect(Array.isArray(results)).toBe(true);
+      expect(results.length).toBe(2);
+      expect(results[0]).toHaveProperty('averageColor');
+      expect(results[1]).toHaveProperty('averageColor');
+    });
+  });
 });
 
 describe('color converters', () => {
   describe('rgbToHex', () => {
     it('should convert rgb to hex', () => {
-      expect(rgbToHex('rgb(255, 0, 0)')).toBe('#ff0000');
-      expect(rgbToHex('rgb(0, 255, 0)')).toBe('#00ff00');
-      expect(rgbToHex('rgb(0, 0, 255)')).toBe('#0000ff');
-      expect(rgbToHex('rgb(128, 64, 32)')).toBe('#804020');
-      expect(rgbToHex('rgb(0, 0, 0)')).toBe('#000000');
-      expect(rgbToHex('rgb(255, 255, 255)')).toBe('#ffffff');
+      expect(rgbToHex('rgb(255,0,0)')).toBe('#ff0000');
+      expect(rgbToHex('rgb(0,255,0)')).toBe('#00ff00');
+      expect(rgbToHex('rgb(0,0,255)')).toBe('#0000ff');
+      expect(rgbToHex('rgb(128,64,32)')).toBe('#804020');
+      expect(rgbToHex('rgb(0,0,0)')).toBe('#000000');
+      expect(rgbToHex('rgb(255,255,255)')).toBe('#ffffff');
     });
   });
 
   describe('rgbToHsl', () => {
     it('should convert pure colors correctly', () => {
-      expect(rgbToHsl('rgb(255, 0, 0)')).toBe('hsl(0, 100%, 50%)');
-      expect(rgbToHsl('rgb(0, 255, 0)')).toBe('hsl(120, 100%, 50%)');
-      expect(rgbToHsl('rgb(0, 0, 255)')).toBe('hsl(240, 100%, 50%)');
+      expect(rgbToHsl('rgb(255,0,0)')).toBe('hsl(0,100%,50%)');
+      expect(rgbToHsl('rgb(0,255,0)')).toBe('hsl(120,100%,50%)');
+      expect(rgbToHsl('rgb(0,0,255)')).toBe('hsl(240,100%,50%)');
     });
 
     it('should convert black and white', () => {
-      expect(rgbToHsl('rgb(0, 0, 0)')).toBe('hsl(0, 0%, 0%)');
-      expect(rgbToHsl('rgb(255, 255, 255)')).toBe('hsl(0, 0%, 100%)');
+      expect(rgbToHsl('rgb(0,0,0)')).toBe('hsl(0,0%,0%)');
+      expect(rgbToHsl('rgb(255,255,255)')).toBe('hsl(0,0%,100%)');
     });
 
     it('should convert gray', () => {
-      expect(rgbToHsl('rgb(128, 128, 128)')).toBe('hsl(0, 0%, 50%)');
+      expect(rgbToHsl('rgb(128,128,128)')).toBe('hsl(0,0%,50%)');
     });
   });
 
   describe('rgbToObject', () => {
     it('should convert rgb to object', () => {
-      expect(rgbToObject('rgb(255, 0, 0)')).toEqual({ r: 255, g: 0, b: 0 });
-      expect(rgbToObject('rgb(128, 64, 32)')).toEqual({ r: 128, g: 64, b: 32 });
-      expect(rgbToObject('rgb(0, 0, 0)')).toEqual({ r: 0, g: 0, b: 0 });
+      expect(rgbToObject('rgb(255,0,0)')).toEqual({ r: 255, g: 0, b: 0 });
+      expect(rgbToObject('rgb(128,64,32)')).toEqual({ r: 128, g: 64, b: 32 });
+      expect(rgbToObject('rgb(0,0,0)')).toEqual({ r: 0, g: 0, b: 0 });
     });
   });
 });
