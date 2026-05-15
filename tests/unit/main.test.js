@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
-  colorBandit,
-  colorBanditBatch,
-  colorBanditWorker,
+  chromancy,
+  chromancyBatch,
+  chromancyWorker,
   clearCache,
   rgbToHex,
   rgbToHsl,
@@ -22,7 +22,7 @@ function createMockImageData(pixelColors, width, height) {
   return { data, width, height };
 }
 
-describe('colorBandit', () => {
+describe('chromancy', () => {
   let mockImageData;
   let mockContext;
   let mockCanvas;
@@ -95,8 +95,8 @@ describe('colorBandit', () => {
 
   describe('basic', () => {
     it('should be defined', () => {
-      expect(colorBandit).toBeDefined();
-      expect(typeof colorBandit).toBe('function');
+      expect(chromancy).toBeDefined();
+      expect(typeof chromancy).toBe('function');
     });
   });
 
@@ -109,7 +109,7 @@ describe('colorBandit', () => {
         height: 2,
       };
 
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         quantizationLevel: 32,
         sampleRate: 1.0,
@@ -131,7 +131,7 @@ describe('colorBandit', () => {
     it('should create an Image from URL and analyze it', async () => {
       const testUrl = 'https://example.com/photo.jpg';
 
-      const promise = colorBandit(testUrl, {
+      const promise = chromancy(testUrl, {
         maxSize: 100,
         sampleRate: 1.0,
         paletteSize: 0,
@@ -151,7 +151,7 @@ describe('colorBandit', () => {
     it('should reject when string URL fails to load', async () => {
       const testUrl = 'https://example.com/broken.jpg';
 
-      const promise = colorBandit(testUrl, {
+      const promise = chromancy(testUrl, {
         maxSize: 100,
         sampleRate: 1.0,
         paletteSize: 0,
@@ -175,7 +175,7 @@ describe('colorBandit', () => {
         height: 4,
       };
 
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         quantizationLevel: 1, // No quantization for precise test
         sampleRate: 1.0,
@@ -206,7 +206,7 @@ describe('colorBandit', () => {
         height: 1,
       };
 
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         quantizationLevel: 1,
         sampleRate: 1.0,
@@ -237,7 +237,7 @@ describe('colorBandit', () => {
         height: 1,
       };
 
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         quantizationLevel: 1,
         sampleRate: 1.0,
@@ -258,7 +258,7 @@ describe('colorBandit', () => {
         height: 1,
       };
 
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         quantizationLevel: 1,
         sampleRate: 1.0,
@@ -281,7 +281,7 @@ describe('colorBandit', () => {
         height: 2,
       };
 
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         sampleRate: 1.0,
         paletteSize: 0,
@@ -300,7 +300,7 @@ describe('colorBandit', () => {
         height: 2,
       };
 
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         quantizationLevel: 1,
         sampleRate: 1.0,
@@ -326,7 +326,7 @@ describe('colorBandit', () => {
       };
 
       // sampleRate=1.0 should sample all 4 pixels
-      await colorBandit(fakeImage, {
+      await chromancy(fakeImage, {
         maxSize: 100,
         quantizationLevel: 32,
         sampleRate: 1.0,
@@ -347,7 +347,7 @@ describe('colorBandit', () => {
     };
 
     it('should return rgb strings when outputFormat is rgb (default)', async () => {
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         sampleRate: 1.0,
         paletteSize: 0,
@@ -358,7 +358,7 @@ describe('colorBandit', () => {
     });
 
     it('should return hex strings when outputFormat is hex', async () => {
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         sampleRate: 1.0,
         paletteSize: 0,
@@ -371,7 +371,7 @@ describe('colorBandit', () => {
     });
 
     it('should return hsl strings when outputFormat is hsl', async () => {
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         sampleRate: 1.0,
         paletteSize: 0,
@@ -384,7 +384,7 @@ describe('colorBandit', () => {
     });
 
     it('should return objects when outputFormat is object', async () => {
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         sampleRate: 1.0,
         paletteSize: 0,
@@ -401,7 +401,7 @@ describe('colorBandit', () => {
     });
 
     it('should convert palette colors to the chosen format', async () => {
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         sampleRate: 1.0,
         paletteSize: 2,
@@ -425,7 +425,7 @@ describe('colorBandit', () => {
         height: 4,
       };
 
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         quantizationLevel: 1,
         sampleRate: 1.0,
@@ -450,7 +450,7 @@ describe('colorBandit', () => {
         height: 4,
       };
 
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         quantizationLevel: 1,
         sampleRate: 1.0,
@@ -477,7 +477,7 @@ describe('colorBandit', () => {
         height: 2,
       };
 
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         quantizationLevel: 1,
         sampleRate: 1.0,
@@ -506,7 +506,7 @@ describe('colorBandit', () => {
         height: 1,
       };
 
-      const result = await colorBandit(fakeImage, {
+      const result = await chromancy(fakeImage, {
         maxSize: 100,
         quantizationLevel: 1,
         sampleRate: 1.0,
@@ -522,7 +522,7 @@ describe('colorBandit', () => {
     it('should cache results for URL strings', async () => {
       const testUrl = 'https://example.com/cached.jpg';
 
-      const promise1 = colorBandit(testUrl, {
+      const promise1 = chromancy(testUrl, {
         maxSize: 100,
         sampleRate: 1.0,
         paletteSize: 0,
@@ -530,7 +530,7 @@ describe('colorBandit', () => {
       mockImageInstances[0]._triggerLoad();
       const result1 = await promise1;
 
-      const result2 = await colorBandit(testUrl, {
+      const result2 = await chromancy(testUrl, {
         maxSize: 100,
         sampleRate: 1.0,
         paletteSize: 0,
@@ -543,7 +543,7 @@ describe('colorBandit', () => {
     it('should clear cache when clearCache is called', async () => {
       const testUrl = 'https://example.com/clear.jpg';
 
-      const promise1 = colorBandit(testUrl, {
+      const promise1 = chromancy(testUrl, {
         maxSize: 100,
         sampleRate: 1.0,
         paletteSize: 0,
@@ -553,7 +553,7 @@ describe('colorBandit', () => {
 
       clearCache();
 
-      const promise2 = colorBandit(testUrl, {
+      const promise2 = chromancy(testUrl, {
         maxSize: 100,
         sampleRate: 1.0,
         paletteSize: 0,
@@ -569,7 +569,7 @@ describe('colorBandit', () => {
     it('should analyze multiple images in parallel', async () => {
       const urls = ['https://example.com/1.jpg', 'https://example.com/2.jpg'];
 
-      const promise = colorBanditBatch(urls, {
+      const promise = chromancyBatch(urls, {
         maxSize: 100,
         sampleRate: 1.0,
         paletteSize: 0,
@@ -589,8 +589,8 @@ describe('colorBandit', () => {
 
   describe('worker', () => {
     it('should be defined', () => {
-      expect(colorBanditWorker).toBeDefined();
-      expect(typeof colorBanditWorker).toBe('function');
+      expect(chromancyWorker).toBeDefined();
+      expect(typeof chromancyWorker).toBe('function');
     });
 
     it('should fallback to main thread when Worker is not supported', async () => {
@@ -602,7 +602,7 @@ describe('colorBandit', () => {
         height: 4,
       };
 
-      const result = await colorBanditWorker(fakeImage, {
+      const result = await chromancyWorker(fakeImage, {
         maxSize: 100,
         quantizationLevel: 1,
         sampleRate: 1.0,

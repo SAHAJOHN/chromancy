@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Color Bandit E2E', () => {
-  test('page should load and colorBandit should be available', async ({
+  test('page should load and chromancy should be available', async ({
     page,
   }) => {
     // Create a simple HTML page that loads the built library
@@ -11,8 +11,8 @@ test.describe('Color Bandit E2E', () => {
         <body>
           <img id="test-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" alt="test">
           <script type="module">
-            import { colorBandit } from '../../dist/color-bandit.js';
-            window.colorBandit = colorBandit;
+            import { chromancy } from '../../dist/chromancy.js';
+            window.chromancy = chromancy;
           </script>
         </body>
       </html>
@@ -22,7 +22,7 @@ test.describe('Color Bandit E2E', () => {
     await page.waitForTimeout(500);
 
     const banditExists = await page.evaluate(
-      () => typeof window.colorBandit === 'function'
+      () => typeof window.chromancy === 'function'
     );
     expect(banditExists).toBe(true);
   });

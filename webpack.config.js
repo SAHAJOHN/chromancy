@@ -11,7 +11,7 @@ export default {
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'color-bandit.js',
+    filename: 'chromancy.js',
     library: {
       type: 'module',
     },

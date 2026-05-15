@@ -16,9 +16,9 @@ export interface ImageProperties {
 }
 
 /**
- * Options for the colorBandit function.
+ * Options for the chromancy function.
  */
-export interface ColorBanditOptions {
+export interface ChromancyOptions {
   /**
    * The maximum width or height (in pixels) to which the image will be resized for analysis.
    * @default 100
@@ -66,9 +66,9 @@ export interface ColorBanditOptions {
 }
 
 /**
- * RGB color result returned by the colorBandit function.
+ * RGB color result returned by the chromancy function.
  */
-export interface ColorBanditResult {
+export interface ChromancyResult {
   /** The average color of the image as an RGB string (e.g., "rgb(128,64,32)"). */
   averageColor: string;
 
@@ -83,9 +83,9 @@ export interface ColorBanditResult {
 }
 
 /**
- * Hex color result returned by the colorBandit function.
+ * Hex color result returned by the chromancy function.
  */
-export interface ColorBanditHexResult {
+export interface ChromancyHexResult {
   /** The average color of the image as a hex string (e.g., "#804020"). */
   averageColor: string;
 
@@ -100,9 +100,9 @@ export interface ColorBanditHexResult {
 }
 
 /**
- * HSL color result returned by the colorBandit function.
+ * HSL color result returned by the chromancy function.
  */
-export interface ColorBanditHslResult {
+export interface ChromancyHslResult {
   /** The average color of the image as an HSL string (e.g., "hsl(20,43%,31%)"). */
   averageColor: string;
 
@@ -117,9 +117,9 @@ export interface ColorBanditHslResult {
 }
 
 /**
- * Object color result returned by the colorBandit function.
+ * Object color result returned by the chromancy function.
  */
-export interface ColorBanditObjectResult {
+export interface ChromancyObjectResult {
   /** The average color of the image as an RGB object. */
   averageColor: { r: number; g: number; b: number };
 
@@ -143,13 +143,13 @@ export interface ColorBanditObjectResult {
  * @example
  * ```typescript
  * // Using an image element
- * const result = await colorBandit(imageElement, {
+ * const result = await chromancy(imageElement, {
  *   maxSize: 150,
  *   paletteSize: 5,
  * });
  *
  * // Using a URL string
- * const result = await colorBandit('https://example.com/photo.jpg', {
+ * const result = await chromancy('https://example.com/photo.jpg', {
  *   maxSize: 150,
  *   outputFormat: 'hex',
  * });
@@ -157,40 +157,40 @@ export interface ColorBanditObjectResult {
  * console.log(result.properties.brightness);  // 0.72
  * ```
  */
-export function colorBandit(
+export function chromancy(
   source: HTMLImageElement | string,
-  options?: ColorBanditOptions
-): Promise<ColorBanditResult>;
+  options?: ChromancyOptions
+): Promise<ChromancyResult>;
 
-export function colorBandit(
+export function chromancy(
   source: HTMLImageElement | string,
-  options: ColorBanditOptions & { outputFormat: 'hex' }
-): Promise<ColorBanditHexResult>;
+  options: ChromancyOptions & { outputFormat: 'hex' }
+): Promise<ChromancyHexResult>;
 
-export function colorBandit(
+export function chromancy(
   source: HTMLImageElement | string,
-  options: ColorBanditOptions & { outputFormat: 'hsl' }
-): Promise<ColorBanditHslResult>;
+  options: ChromancyOptions & { outputFormat: 'hsl' }
+): Promise<ChromancyHslResult>;
 
-export function colorBandit(
+export function chromancy(
   source: HTMLImageElement | string,
-  options: ColorBanditOptions & { outputFormat: 'object' }
-): Promise<ColorBanditObjectResult>;
+  options: ChromancyOptions & { outputFormat: 'object' }
+): Promise<ChromancyObjectResult>;
 
 /**
  * Web Worker version: offloads color analysis to a worker thread
  * to avoid blocking the main UI thread.
  *
- * Falls back to `colorBandit()` if Web Workers are not supported.
+ * Falls back to `chromancy()` if Web Workers are not supported.
  *
  * @param source - An HTMLImageElement or a string URL.
  * @param options - Optional configuration for the analysis.
  * @returns A promise that resolves to the color analysis result.
  */
-export function colorBanditWorker(
+export function chromancyWorker(
   source: HTMLImageElement | string,
-  options?: ColorBanditOptions
-): Promise<ColorBanditResult>;
+  options?: ChromancyOptions
+): Promise<ChromancyResult>;
 
 /**
  * Batch processing: analyze multiple images in parallel.
@@ -199,10 +199,10 @@ export function colorBanditWorker(
  * @param options - Optional configuration applied to all images.
  * @returns A promise that resolves to an array of color analysis results.
  */
-export function colorBanditBatch(
+export function chromancyBatch(
   sources: (HTMLImageElement | string)[],
-  options?: ColorBanditOptions
-): Promise<ColorBanditResult[]>;
+  options?: ChromancyOptions
+): Promise<ChromancyResult[]>;
 
 /**
  * Clear the URL-based result cache.

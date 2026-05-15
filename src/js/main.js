@@ -475,7 +475,7 @@ function convertResult(result, format) {
 }
 
 // Main function for color analysis
-export async function colorBandit(imageElementOrUrl, options = {}) {
+export async function chromancy(imageElementOrUrl, options = {}) {
   const {
     maxSize = 100,
     quantizationLevel = 32,
@@ -536,10 +536,10 @@ export async function colorBandit(imageElementOrUrl, options = {}) {
 }
 
 // Web Worker version: offloads analysis to a worker thread
-export async function colorBanditWorker(source, options = {}) {
+export async function chromancyWorker(source, options = {}) {
   // Fallback if Workers are not supported
   if (typeof Worker === 'undefined') {
-    return colorBandit(source, options);
+    return chromancy(source, options);
   }
 
   const {
@@ -604,7 +604,7 @@ export async function colorBanditWorker(source, options = {}) {
 }
 
 // Batch processing: analyze multiple images in parallel
-export async function colorBanditBatch(sources, options = {}) {
-  const promises = sources.map((source) => colorBandit(source, options));
+export async function chromancyBatch(sources, options = {}) {
+  const promises = sources.map((source) => chromancy(source, options));
   return Promise.all(promises);
 }

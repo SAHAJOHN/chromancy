@@ -1,19 +1,45 @@
-# Color Bandit JS
+# Chromancy
 
-An image color analysis library that helps you extract the average color, dominant color, and a color palette from an image element. This library is useful for applications like image processing, theming, or any feature that requires color extraction from images.
+[![npm version](https://badge.fury.io/js/chromancy.svg)](https://www.npmjs.com/package/chromancy)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Bundle Size](https://badgen.net/bundlephobia/minzip/chromancy)](https://bundlephobia.com/package/chromancy)
+
+> The fastest way to steal colors from images in the browser. Extract average, dominant, and palette colors with property analysis, batch processing, and Web Worker support — all in a 15KB package.
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [API Reference](#api-reference)
+  - [`chromancy(source, options)`](#chromancysource-options)
+  - [`chromancyWorker(source, options)`](#chromancyworkersource-options)
+  - [`chromancyBatch(sources, options)`](#chromancybatchsources-options)
+  - [`clearCache()`](#clearcache)
+  - [`rgbToHex(rgb)`](#rgbtohexrgb)
+  - [`rgbToHsl(rgb)`](#rgbtohslrgb)
+  - [`rgbToObject(rgb)`](#rgbtoobjectrgb)
+- [Options](#options)
+- [Output Formats](#output-formats)
+- [Examples](#examples)
+  - [Vanilla JavaScript](#vanilla-javascript)
+  - [React](#react)
+  - [TypeScript](#typescript)
+  - [Next.js](#nextjs)
+- [Browser Support](#browser-support)
+- [License](#license)
 
 ## Features
 
-- **Average Color Calculation**
-- **Dominant Color Detection**
-- **Color Palette Generation**
-- **Image Properties** — Extract brightness, warmth, saturation, and contrast
-- **URL String Support** — Pass an image URL directly without creating an `<img>` element
-- **Multiple Output Formats** — Get colors as `rgb`, `hex`, `hsl`, or `{ r, g, b }` objects
-- **Alpha Channel Support** — Automatically skips fully transparent pixels
-- **URL Caching** — Avoid re-analyzing the same image URL
-- **Batch Processing** — Analyze multiple images in parallel
-- **Web Worker Support** — Offload heavy analysis to a worker thread (no UI blocking)
+- 🎨 **Average, Dominant & Palette** — Extract average color, dominant color, and a full color palette from any image
+- 🌈 **Multiple Output Formats** — Get colors as `rgb`, `hex`, `hsl`, or `{ r, g, b }` objects
+- 📊 **Image Properties** — Analyze brightness, warmth, saturation, and contrast
+- 🚀 **Web Worker Support** — Offload heavy analysis to a worker thread without blocking the UI
+- ⚡ **Batch Processing** — Analyze multiple images in parallel with a single call
+- 💾 **URL Caching** — Automatically cache results for URL inputs to avoid re-analysis
+- 🪶 **Lightweight** — Only ~15KB minified, zero dependencies
+- 🖼️ **Flexible Input** — Pass an `HTMLImageElement` or a URL string directly
+- 🧊 **Alpha Channel Support** — Automatically skips fully transparent pixels
 
 ## Installation
 
@@ -27,212 +53,229 @@ Or with Yarn:
 yarn add chromancy
 ```
 
----
-
-## Usage
+## Quick Start
 
 ```javascript
-import { colorBandit } from 'chromancy';
+import { chromancy } from 'chromancy';
 
-// Option 1: Pass an HTMLImageElement
-const imageElement = document.getElementById('your-image-id');
-const result = await colorBandit(imageElement, {
-  maxSize: 100,
+const result = await chromancy('https://example.com/photo.jpg');
+
+console.log(result.averageColor);  // "rgb(128,64,32)"
+console.log(result.dominantColor); // "rgb(200,100,50)"
+console.log(result.palette);       // ["rgb(...)", "rgb(...)", ...]
+console.log(result.properties);    // { brightness, warmth, saturation, contrast }
+```
+
+## API Reference
+
+### `chromancy(source, options)`
+
+The main function for extracting colors from an image.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `source` | `HTMLImageElement \| string` | An image element or a URL string |
+| `options` | `ChromancyOptions` | *(Optional)* Configuration options |
+
+**Returns:** `Promise<ChromancyResult>`
+
+```javascript
+import { chromancy } from 'chromancy';
+
+// With an image element
+const img = document.getElementById('my-image');
+const result = await chromancy(img, { paletteSize: 5 });
+
+// With a URL string
+const result = await chromancy('https://example.com/photo.jpg', {
+  outputFormat: 'hex',
+  paletteSize: 3,
+});
+```
+
+### `chromancyWorker(source, options)`
+
+Runs color analysis in a Web Worker to avoid blocking the main thread. Falls back to `chromancy()` if Web Workers are not supported.
+
+**Parameters:** Same as `chromancy()`
+
+**Returns:** `Promise<ChromancyResult>`
+
+```javascript
+import { chromancyWorker } from 'chromancy';
+
+const result = await chromancyWorker('https://example.com/photo.jpg', {
   paletteSize: 5,
 });
-
-// Option 2: Pass a URL string directly
-const result = await colorBandit('https://example.com/photo.jpg', {
-  maxSize: 100,
-  paletteSize: 5,
-});
-
-console.log('Average Color:', result.averageColor);
-console.log('Dominant Color:', result.dominantColor);
-console.log('Color Palette:', result.palette);
-console.log('Properties:', result.properties);
-// Properties: { brightness: 0.72, warmth: 0.85, saturation: 0.65, contrast: 0.45 }
 ```
 
-> **Important:** This library uses browser DOM APIs (`canvas`, `document`). It **only works in the browser** and cannot be used in Node.js.
+### `chromancyBatch(sources, options)`
 
-## Options
+Analyzes multiple images in parallel.
 
-You can customize the color analysis by passing an `options` object to the `analyzeColors` function. The available options are:
+**Parameters:**
 
-| Option              | Type   | Description                                                                                                                                                                                                                            | Default |
-| ------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `maxSize`           | Number | The maximum width or height (in pixels) to which the image will be resized for analysis.                                                                                                                                               | `100`   |
-| `quantizationLevel` | Number | Determines the level of color quantization. A lower number increases the number of color bins (finer color detail), while a higher number reduces color precision.                                                                     | `32`    |
-| `sampleRate`        | Number | The fraction of pixels to sample from the image (between `0` and `1`). For example, `0.5` means half of the pixels will be sampled.                                                                                                    | `0.1`   |
-| `paletteSize`       | Number | The number of distinct colors to include in the generated color palette. If set to `0`, no palette array will be generated.                                                                                                            | `5`     |
-| `colorScale`        | Number | Adjusts the resulting colors by normalizing and scaling their intensity. A value of `0` means no scaling is applied, returning the original colors. Values greater than `0` will scale colors proportionally to their original ratios. | `0`     |
-| `outputFormat`      | String | The output format for returned colors: `'rgb'`, `'hex'`, `'hsl'`, or `'object'`.                                                                                                                                                       | `'rgb'` |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `sources` | `Array<HTMLImageElement \| string>` | Array of image elements or URL strings |
+| `options` | `ChromancyOptions` | *(Optional)* Configuration options |
 
-### Output Formats
+**Returns:** `Promise<ChromancyResult[]>`
 
 ```javascript
-// RGB (default)
-const rgb = await colorBandit(url, { paletteSize: 3 });
-// rgb.averageColor  -> "rgb(128,64,32)"
+import { chromancyBatch } from 'chromancy';
 
-// Hex
-const hex = await colorBandit(url, { paletteSize: 3, outputFormat: 'hex' });
-// hex.averageColor  -> "#804020"
+const results = await chromancyBatch([
+  'https://example.com/1.jpg',
+  'https://example.com/2.jpg',
+  'https://example.com/3.jpg',
+], { paletteSize: 5 });
 
-// HSL
-const hsl = await colorBandit(url, { paletteSize: 3, outputFormat: 'hsl' });
-// hsl.averageColor  -> "hsl(20,43%,31%)"
-
-// Object
-const obj = await colorBandit(url, { paletteSize: 3, outputFormat: 'object' });
-// obj.averageColor  -> { r: 128, g: 64, b: 32 }
+// results[0] -> result for 1.jpg
+// results[1] -> result for 2.jpg
+// results[2] -> result for 3.jpg
 ```
 
-### Web Worker (No UI Blocking)
+### `clearCache()`
+
+Clears the URL result cache.
 
 ```javascript
-import { colorBanditWorker } from 'chromancy';
-
-const result = await colorBanditWorker('https://example.com/photo.jpg', {
-  paletteSize: 5,
-});
-// Same result as colorBandit(), but runs in a Web Worker
-// Falls back to main thread if Workers are not supported
-```
-
-### Batch Processing
-
-```javascript
-import { colorBanditBatch } from 'chromancy';
-
-const results = await colorBanditBatch(
-  ['https://example.com/1.jpg', 'https://example.com/2.jpg'],
-  { paletteSize: 5 }
-);
-// results = [result1, result2]
-```
-
-### Caching
-
-```javascript
-import { colorBandit, clearCache } from 'chromancy';
+import { chromancy, clearCache } from 'chromancy';
 
 // First call — analyzes the image
-const result1 = await colorBandit('https://example.com/photo.jpg');
+await chromancy('https://example.com/photo.jpg');
 
 // Second call — returns cached result instantly
-const result2 = await colorBandit('https://example.com/photo.jpg');
+await chromancy('https://example.com/photo.jpg');
 
 // Clear cache when needed
 clearCache();
 ```
 
-## Example
+### `rgbToHex(rgb)`
+
+Converts an RGB string to a Hex string.
+
+```javascript
+import { rgbToHex } from 'chromancy';
+
+rgbToHex('rgb(128, 64, 32)'); // "#804020"
+```
+
+### `rgbToHsl(rgb)`
+
+Converts an RGB string to an HSL string.
+
+```javascript
+import { rgbToHsl } from 'chromancy';
+
+rgbToHsl('rgb(128, 64, 32)'); // "hsl(20, 43%, 31%)"
+```
+
+### `rgbToObject(rgb)`
+
+Converts an RGB string to an `{ r, g, b }` object.
+
+```javascript
+import { rgbToObject } from 'chromancy';
+
+rgbToObject('rgb(128, 64, 32)'); // { r: 128, g: 64, b: 32 }
+```
+
+## Options
+
+| Option | Type | Description | Default |
+|--------|------|-------------|---------|
+| `maxSize` | `number` | Maximum width or height (in pixels) to resize the image for analysis | `100` |
+| `quantizationLevel` | `number` | Color quantization level. Lower = more color bins (finer detail), Higher = less precision | `32` |
+| `sampleRate` | `number` | Fraction of pixels to sample (0 to 1). `0.5` = half of pixels | `0.1` |
+| `paletteSize` | `number` | Number of distinct colors in the palette. Set to `0` to disable | `5` |
+| `colorScale` | `number` | Normalizes and scales color intensity. `0` = no scaling | `0` |
+| `outputFormat` | `string` | Output format: `'rgb'`, `'hex'`, `'hsl'`, or `'object'` | `'rgb'` |
+
+## Output Formats
+
+```javascript
+// RGB (default)
+const rgb = await chromancy(url, { paletteSize: 3 });
+// rgb.averageColor  -> "rgb(128,64,32)"
+
+// Hex
+const hex = await chromancy(url, { paletteSize: 3, outputFormat: 'hex' });
+// hex.averageColor  -> "#804020"
+
+// HSL
+const hsl = await chromancy(url, { paletteSize: 3, outputFormat: 'hsl' });
+// hsl.averageColor  -> "hsl(20,43%,31%)"
+
+// Object
+const obj = await chromancy(url, { paletteSize: 3, outputFormat: 'object' });
+// obj.averageColor  -> { r: 128, g: 64, b: 32 }
+```
+
+## Examples
 
 ### Vanilla JavaScript
-
-Here's an example demonstrating how to use the library in a basic HTML/JavaScript setup:
 
 ```html
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>ColorBandit Example</title>
+    <title>Chromancy Example</title>
   </head>
   <body>
-    <img id="your-image-id" src="path-to-your-image.jpg" alt="Sample Image" />
+    <img id="my-image" src="photo.jpg" alt="Sample" />
 
     <script type="module">
-      import { colorBandit } from './chromancy.js';
+      import { chromancy } from 'chromancy';
 
-      const imageElement = document.getElementById('your-image-id');
+      const img = document.getElementById('my-image');
 
-      colorBandit(imageElement, {
-        maxSize: 150,
-        quantizationLevel: 16,
-        sampleRate: 0.2,
-        paletteSize: 3,
-        colorScale: 0,
-      })
+      chromancy(img, { maxSize: 150, paletteSize: 5 })
         .then((result) => {
-          console.log('Average Color:', result.averageColor);
-          console.log('Dominant Color:', result.dominantColor);
-          console.log('Color Palette:', result.palette);
-
-          // Apply the dominant color as the background
           document.body.style.backgroundColor = result.dominantColor;
+          console.log('Palette:', result.palette);
         })
-        .catch((error) => {
-          console.error('Error analyzing colors:', error);
-        });
+        .catch((err) => console.error(err));
     </script>
   </body>
 </html>
 ```
 
-### React (Using `useRef`)
-
-Here's an example demonstrating how to use the library in a React application with the `useRef` hook:
+### React
 
 ```jsx
-import React, { useRef, useEffect } from 'react';
-import { colorBandit } from 'chromancy';
+import { useRef, useEffect } from 'react';
+import { chromancy } from 'chromancy';
 
-const ImageAnalyzer = () => {
+function ImageAnalyzer() {
   const imageRef = useRef(null);
 
   useEffect(() => {
-    const analyzeImageColors = async () => {
+    async function analyze() {
       if (!imageRef.current) return;
-
-      try {
-        const result = await colorBandit(imageRef.current, {
-          maxSize: 150,
-          quantizationLevel: 16,
-          sampleRate: 0.2,
-          paletteSize: 5,
-          colorScale: 0,
-        });
-
-        console.log('Average Color:', result.averageColor);
-        console.log('Dominant Color:', result.dominantColor);
-        console.log('Color Palette:', result.palette);
-
-        // Set the dominant color as the background color
-        document.body.style.backgroundColor = result.dominantColor;
-      } catch (error) {
-        console.error('Error analyzing colors:', error);
-      }
-    };
-
-    analyzeImageColors();
+      const result = await chromancy(imageRef.current, { paletteSize: 5 });
+      document.body.style.backgroundColor = result.dominantColor;
+    }
+    analyze();
   }, []);
 
-  return (
-    <div>
-      <img
-        ref={imageRef}
-        src="path-to-your-image.jpg"
-        alt="Sample Image"
-        style={{ maxWidth: '100%', height: 'auto' }}
-      />
-    </div>
-  );
-};
+  return <img ref={imageRef} src="photo.jpg" alt="Sample" style={{ maxWidth: '100%' }} />;
+}
 
 export default ImageAnalyzer;
 ```
 
 ### TypeScript
 
-The library includes TypeScript declarations out of the box:
-
 ```typescript
-import { colorBandit, ColorBanditOptions } from 'chromancy';
+import { chromancy, ChromancyOptions, ChromancyResult } from 'chromancy';
 
-const options: ColorBanditOptions = {
+const options: ChromancyOptions = {
   maxSize: 150,
   quantizationLevel: 16,
   sampleRate: 0.2,
@@ -240,24 +283,17 @@ const options: ColorBanditOptions = {
   outputFormat: 'hex',
 };
 
-const result = await colorBandit('https://example.com/photo.jpg', options);
-// result.averageColor   -> string (e.g., "#804020")
-// result.dominantColor  -> string
-// result.palette        -> string[]
-// result.properties     -> { brightness, warmth, saturation, contrast }
+const result: ChromancyResult = await chromancy('https://example.com/photo.jpg', options);
 
-// With outputFormat: 'object'
-const objResult = await colorBandit(imageElement, {
-  ...options,
-  outputFormat: 'object',
-});
-// objResult.averageColor -> { r: 128, g: 64, b: 32 }
-// objResult.properties   -> { brightness: 0.72, warmth: 0.85, ... }
+console.log(result.averageColor);   // string (e.g., "#804020")
+console.log(result.dominantColor);  // string
+console.log(result.palette);        // string[]
+console.log(result.properties);     // { brightness, warmth, saturation, contrast }
 ```
 
 ### Next.js
 
-Because this library requires the browser's DOM, you must use **dynamic import** with `ssr: false`:
+Because this library requires the browser's DOM, use **dynamic import** with `ssr: false`:
 
 ```tsx
 'use client';
@@ -271,13 +307,8 @@ export default function ImageAnalyzer() {
     async function analyze() {
       if (!imageRef.current) return;
 
-      // Dynamic import — only runs in the browser
-      const { colorBandit } = await import('chromancy');
-
-      const result = await colorBandit(imageRef.current, {
-        maxSize: 150,
-        paletteSize: 5,
-      });
+      const { chromancy } = await import('chromancy');
+      const result = await chromancy(imageRef.current, { maxSize: 150, paletteSize: 5 });
 
       document.body.style.backgroundColor = result.dominantColor;
     }
@@ -296,25 +327,16 @@ export default function ImageAnalyzer() {
 }
 ```
 
-## Limitations
+## Browser Support
 
-| Limitation                   | Description                                                                                                                                                        |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Cross-Origin Images**      | Due to browser security policies (CORS), the library may not work with images from different origins unless the appropriate CORS headers are set.                  |
-| **Performance**              | Analyzing very large images can be resource-intensive. Adjust the `maxSize` and `sampleRate` options to optimize performance.                                      |
-| **Accuracy vs. Performance** | There's a trade-off between accuracy and performance. Increasing `sampleRate` and decreasing `quantizationLevel` will improve accuracy but may reduce performance. |
+Chromancy uses browser DOM APIs (`canvas`, `document`) and works in all modern browsers:
 
-## Contributing
+| Chrome | Firefox | Safari | Edge |
+|--------|---------|--------|------|
+| ✅ 60+ | ✅ 60+ | ✅ 12+ | ✅ 79+ |
 
-Contributions are welcome! If you have suggestions, bug reports, or pull requests, feel free to submit them on the project's GitHub repository.
-
-### To contribute:
-
-1. Fork the repository.
-2. Create a new branch for your feature or bugfix.
-3. Commit your changes with clear messages.
-4. Submit a pull request describing your changes.
+> ⚠️ **Note:** Cross-origin images require proper CORS headers. The library will throw an error if the image cannot be loaded due to CORS restrictions.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+[MIT](LICENSE) © sahajohn
