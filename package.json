@@ -6,6 +6,10 @@
   "sideEffects": false,
   "main": "dist/chromancy.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SAHAJOHN/chromancy.git"
+  },
   "files": [
     "dist",
     "LICENSE",
