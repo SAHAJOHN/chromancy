@@ -20,7 +20,7 @@ export default {
     outputModule: true,
   },
   mode: 'production',
-  devtool: 'source-map',
+  devtool: false,
   optimization: {
     minimize: true,
     minimizer: [

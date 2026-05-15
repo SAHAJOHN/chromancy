@@ -5,3 +5,5 @@ node_modules/
 .gitignore
 webpack.config.js
 package-lock.json
+*.map
+*.LICENSE.txt
