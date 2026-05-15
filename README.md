@@ -17,23 +17,19 @@ An image color analysis library that helps you extract the average color, domina
 
 ## Installation
 
-Choose one of the following methods to use the library in your project:
-
-### 1. Install from local path (recommended for local projects)
-
-If you have this repository cloned locally, you can install it directly:
-
 ```bash
-npm install /absolute/path/to/color-bandit-js
+npm install color-bandit-js
 ```
 
-Or with a relative path:
+Or with Yarn:
 
 ```bash
-npm install ../color-bandit-js
+yarn add color-bandit-js
 ```
 
-### 2. Link during development (`npm link`)
+### Development (`npm link`)
+
+If you're contributing to this library, you can link it locally:
 
 In the library folder:
 
@@ -47,12 +43,6 @@ In your project folder:
 ```bash
 npm link color-bandit-js
 ```
-
-### 3. Copy build files manually
-
-Copy these files from the `dist/` folder into your project:
-
-- `color-bandit.js`
 - `color-bandit.js.map`
 - `index.d.ts`
 
