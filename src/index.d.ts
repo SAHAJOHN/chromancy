@@ -178,15 +178,13 @@ export function chromancy(
 ): Promise<ChromancyObjectResult>;
 
 /**
- * Web Worker version: offloads color analysis to a worker thread
- * to avoid blocking the main UI thread.
+ * Analyzes an image and extracts color information.
  *
- * Falls back to `chromancy()` if Web Workers are not supported.
- *
- * @param source - An HTMLImageElement or a string URL.
+ * @param source - An HTMLImageElement or a string URL pointing to the image.
  * @param options - Optional configuration for the analysis.
  * @returns A promise that resolves to the color analysis result.
  */
+export function chromancy(
   source: HTMLImageElement | string,
   options?: ChromancyOptions
 ): Promise<ChromancyResult>;
