@@ -1,6 +1,6 @@
 {
   "name": "chromancy",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "The fastest way to steal colors from images in the browser. Extract average, dominant, and palette colors with property analysis, batch processing, and Web Worker support — all in a 15KB package.",
   "type": "module",
   "sideEffects": false,
