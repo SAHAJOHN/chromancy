@@ -14,8 +14,8 @@ const ResultsPanelStyled = styled.div`
   }
 
   .result-panel {
-    max-width: 680px;
-    margin: 0 auto ${theme.spacing['15']};
+    max-width: 800px;
+    margin: 0 auto 16px};
     background: ${theme.colors.surface};
     border: 1px solid ${theme.colors.border};
     border-radius: ${theme.radii.xl};
@@ -72,13 +72,6 @@ const ResultsPanelStyled = styled.div`
     border-color: ${theme.colors.fg};
   }
 
-  .code-section__title {
-    font-family: ${theme.fonts.mono};
-    font-size: ${theme.fontSize.xs};
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: ${theme.colors.muted};
-  }
 
   .code-out {
     background: ${theme.colors.codeBg};
@@ -169,7 +162,6 @@ export default function ResultsPanel({ result }: ResultsPanelProps) {
           </div>
 
           <div>
-            <div className="code-section__title">Result Object</div>
             <pre className="code-out">
               <span className="comment">// ChromancyResult</span>
               {'\n'}{'{ '}

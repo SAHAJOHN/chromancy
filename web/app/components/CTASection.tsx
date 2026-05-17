@@ -44,6 +44,7 @@ const CTASectionStyled = styled.section`
     cursor: pointer;
     border: none;
     transition: opacity ${theme.transition.default};
+    height: 48px;
   }
 
   .cta__btn--primary {

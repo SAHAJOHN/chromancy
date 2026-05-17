@@ -23,7 +23,7 @@ const DemoPageStyled = styled.div`
   }
 
   .url-section {
-    max-width: 680px;
+    max-width: 800px;
     margin: 0 auto ${theme.spacing['13']};
   }
 
@@ -41,6 +41,7 @@ const DemoPageStyled = styled.div`
     font-family: ${theme.fonts.body};
     background: ${theme.colors.surface};
     color: ${theme.colors.fg};
+    height: 48px;
     transition: border-color ${theme.transition.default}, box-shadow ${theme.transition.default};
   }
 
@@ -66,6 +67,7 @@ const DemoPageStyled = styled.div`
     cursor: pointer;
     transition: opacity ${theme.transition.default};
     white-space: nowrap;
+    height: 48px;
   }
 
   .url-row__btn:hover {
@@ -164,7 +166,7 @@ export default function DemoPage() {
         <main className="demo-page__main">
           <DemoHero />
           <Container>
-            <div style={{ maxWidth: '680px', margin: '0 auto 24px' }}>
+            <div style={{ maxWidth: '800px', margin: '0 auto 24px' }}>
               <UploadZone onFileSelect={handleFileSelect} />
             </div>
             <div className="url-section">
@@ -182,7 +184,9 @@ export default function DemoPage() {
                 </button>
               </div>
             </div>
-            <ResultsPanel result={result} previewSrc={previewSrc} onCopy={handleCopy} />
+            {result && (
+              <ResultsPanel result={result} previewSrc={previewSrc} onCopy={handleCopy} />
+            )}
           </Container>
         </main>
         <Footer />

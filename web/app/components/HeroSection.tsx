@@ -18,7 +18,7 @@ interface Artwork {
 
 const HeroSectionStyled = styled.section`
   .hero {
-    padding: 120px 0 80px;
+    padding: 100px 0 80px;
     text-align: center;
     position: relative;
     overflow: hidden;
