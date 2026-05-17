@@ -57,6 +57,7 @@
     "batch",
     "cache"
   ],
+  "homepage": "https://chromancy-delta.vercel.app",
   "author": "sahajohn",
   "license": "MIT",
   "devDependencies": {
