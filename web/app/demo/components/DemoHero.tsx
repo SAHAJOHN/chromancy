@@ -38,10 +38,10 @@ const DemoHeroStyled = styled.section`
 
   @media (max-width: ${theme.breakpoints.md}) {
     .demo-hero {
-      padding: ${theme.spacing['15']} 0 ${theme.spacing['12']};
+      padding: 90px 0 40px;
     }
   }
-`
+`;
 
 export default function DemoHero() {
   return (

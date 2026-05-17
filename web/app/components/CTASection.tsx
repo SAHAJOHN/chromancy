@@ -60,10 +60,10 @@ const CTASectionStyled = styled.section`
 
   @media (max-width: ${theme.breakpoints.lg}) {
     .cta {
-      padding: 80px 0;
+      padding: 48px 0;
     }
   }
-`
+`;
 
 export default function CTASection() {
   return (

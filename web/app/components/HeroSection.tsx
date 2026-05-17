@@ -39,7 +39,7 @@ const HeroSectionStyled = styled.section`
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: ${theme.colors.accent};
-    margin-bottom: 24px;
+    margin-bottom: 28px;
   }
 
   .hero__title {
@@ -341,9 +341,9 @@ flex-wrap: wrap;
     font-size: ${theme.fontSize.sm};
   }
 
-  @media (max-width: ${theme.breakpoints.lg}) {
+  @media (max-width: ${theme.breakpoints.md}) {
     .hero {
-      padding: 90px 0 60px;
+      padding: 90px 0 0 0;
     }
 
     .hero__visual {

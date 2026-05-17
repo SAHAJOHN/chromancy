@@ -13,6 +13,9 @@ const FeaturesSectionStyled = styled.section`
     text-align: center;
     max-width: 640px;
     margin: 0 auto 64px;
+    @media (max-width: ${theme.breakpoints.md}) {
+      margin: 0 auto 48px;
+    }
   }
 
   .features__kicker {
@@ -80,14 +83,14 @@ const FeaturesSectionStyled = styled.section`
 
   @media (max-width: ${theme.breakpoints.lg}) {
     .features {
-      padding: 64px 0;
+      padding: 48px 0;
     }
 
     .features__grid {
       grid-template-columns: 1fr;
     }
   }
-`
+`;
 
 const features = [
   {

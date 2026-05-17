@@ -4,6 +4,9 @@ import styled from 'styled-components'
 import { theme } from '@/app/styles/global'
 
 const DocsContentStyled = styled.main`
+  @media (max-width: ${theme.breakpoints.lg}) {
+    margin-top: -24px;
+  }
   .docs-content {
     min-width: 0;
   }
@@ -163,7 +166,7 @@ const DocsContentStyled = styled.main`
     color: ${theme.colors.muted};
     margin-bottom: 12px;
   }
-`
+`;
 
 export default function DocsContent() {
   return (

@@ -46,11 +46,15 @@ const QuickStartSectionStyled = styled.section`
     background: ${theme.colors.codeBg};
     color: ${theme.colors.surface};
     border-radius: ${theme.radii.lg};
-    overflow-x: auto;
     font-family: ${theme.fonts.mono};
     font-size: 14px;
     line-height: 1.7;
-    white-space: pre;
+  }
+
+  .quick-start__code pre {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    margin: 0;
   }
 
   .quick-start__code .comment {
@@ -71,7 +75,7 @@ const QuickStartSectionStyled = styled.section`
 
   @media (max-width: ${theme.breakpoints.lg}) {
     .quick-start {
-      padding: 64px 0;
+      padding: 48px 0;
     }
 
     .quick-start__code {
