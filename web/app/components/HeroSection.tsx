@@ -1,10 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import styled from 'styled-components'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { Navigation, Autoplay } from 'swiper/modules'
+import { chromancy, type ChromancyResult } from 'chromancy'
 import { theme } from '@/app/styles/global'
 import Container from './Container'
+
+interface Artwork {
+  id: number
+  title: string
+  imageUrl: string
+  artist: string
+}
 
 const HeroSectionStyled = styled.section`
   .hero {
@@ -15,6 +25,15 @@ const HeroSectionStyled = styled.section`
   }
 
   .hero__kicker {
+    font-family: ${theme.fonts.mono};
+    font-size: ${theme.fontSize.md};
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: ${theme.colors.accent};
+    margin-bottom: 24px;
+  }
+
+  .hero__visual-kicker {
     font-family: ${theme.fonts.mono};
     font-size: ${theme.fontSize.md};
     text-transform: uppercase;
@@ -87,6 +106,7 @@ const HeroSectionStyled = styled.section`
     font-size: ${theme.fontSize.base};
     color: ${theme.colors.muted};
     height: 48px;
+    margin-bottom: 52px;
   }
 
   .hero__install-code {
@@ -111,10 +131,10 @@ const HeroSectionStyled = styled.section`
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 24px;
-    margin-top: 38px;
     margin-left: auto;
     margin-right: auto;
     align-items: stretch;
+    height: 424px;
   }
 
   .hero__visual-panel {
@@ -125,6 +145,93 @@ const HeroSectionStyled = styled.section`
     display: flex;
     flex-direction: column;
     gap: 14px;
+    min-height: 420px;
+  }
+
+  .hero__visual-panel--swiper {
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .hero__swiper {
+    width: 100%;
+    height: 100%;
+    border-radius: ${theme.radii.xl};
+  }
+
+  .hero__swiper-slide {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero__swiper-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .hero__swiper-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 48px 20px 20px;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+    color: #fff;
+    text-align: left;
+    pointer-events: none;
+  }
+
+  .hero__swiper-nav {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+  }
+
+  .hero__swiper-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .hero__swiper-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+  }
+
+  .hero__swiper-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .hero__swiper-title {
+    font-family: ${theme.fonts.display};
+    font-size: ${theme.fontSize.lg};
+    font-weight: 500;
+    line-height: 1.3;
+    margin-bottom: 4px;
+  }
+
+  .hero__swiper-artist {
+    font-family: ${theme.fonts.mono};
+    font-size: ${theme.fontSize.sm};
+    opacity: 0.85;
   }
 
   .hero__visual-header {
@@ -176,6 +283,7 @@ const HeroSectionStyled = styled.section`
   .hero__palette-row {
     display: flex;
     gap: 8px;
+flex-wrap: wrap;
   }
 
   .hero__palette-swatch {
@@ -223,21 +331,148 @@ const HeroSectionStyled = styled.section`
     flex-shrink: 0;
   }
 
+  .hero__analyzing {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: ${theme.colors.muted};
+    font-family: ${theme.fonts.mono};
+    font-size: ${theme.fontSize.sm};
+  }
+
   @media (max-width: ${theme.breakpoints.lg}) {
     .hero {
-      padding: 80px 0 60px;
+      padding: 90px 0 60px;
+    }
+
+    .hero__visual {
+      grid-template-columns: 1fr;
+      height: unset;
+    }
+
+    .hero__visual-panel {
+      min-height: 360px;
+    }
+    .hero__visual-panel--swiper {
+      height: 430.97px;
     }
   }
 `;
 
 export default function HeroSection() {
   const [copied, setCopied] = useState(false)
+  const [artworks, setArtworks] = useState<Artwork[]>([])
+  const [results, setResults] = useState<Record<number, ChromancyResult>>({})
+  const [currentResult, setCurrentResult] = useState<ChromancyResult | null>(null)
+  const [analyzing, setAnalyzing] = useState(false)
+  const prevRef = useRef<HTMLButtonElement>(null)
+  const nextRef = useRef<HTMLButtonElement>(null)
 
   const handleCopy = () => {
     navigator.clipboard.writeText('npm i chromancy')
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
+
+  const shuffle = <T,>(array: T[]): T[] => {
+    const arr = [...array]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr
+  }
+
+  const analyzeArtwork = async (artwork: Artwork) => {
+    if (results[artwork.id]) {
+      setCurrentResult(results[artwork.id])
+      return
+    }
+
+    setAnalyzing(true)
+    try {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.src = artwork.imageUrl
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve()
+        img.onerror = reject
+      })
+
+      const result = await chromancy(img, {
+        paletteSize: 8,
+        maxSize: 150,
+        outputFormat: 'rgb',
+      })
+
+      setResults(prev => ({ ...prev, [artwork.id]: result }))
+      setCurrentResult(result)
+    } catch (err) {
+      console.error('Chromancy analysis error:', err)
+      // Remove broken artwork from the list
+      setArtworks(prev => prev.filter(a => a.id !== artwork.id))
+    } finally {
+      setAnalyzing(false)
+    }
+  }
+
+  useEffect(() => {
+    async function fetchArtworks() {
+      try {
+        const url = new URL('https://api.artic.edu/api/v1/artworks/search')
+        url.searchParams.set('fields', 'id,title,image_id,artist_title')
+        const queries = ['painting', 'watercolor', 'colorful', 'pop art', 'cat']
+        const randomQuery = queries[Math.floor(Math.random() * queries.length)]
+        url.searchParams.set('limit', '30')
+        url.searchParams.set('q', randomQuery)
+        url.searchParams.set('query[term][is_public_domain]', 'true')
+
+        const res = await fetch(url.toString(), {
+          headers: {
+            'AIC-User-Agent': 'chromancy-landing (sahajohn)',
+          },
+        })
+
+        if (!res.ok) throw new Error('Failed to fetch artworks')
+
+        const json = await res.json()
+        const iiifBase = json.config?.iiif_url || 'https://www.artic.edu/iiif/2'
+
+        const items: Artwork[] = json.data
+          .filter((art: any) => art.image_id)
+          .map((art: any) => ({
+            id: art.id,
+            title: art.title,
+            imageUrl: `${iiifBase}/${art.image_id}/full/843,/0/default.jpg`,
+            artist: art.artist_title || 'Unknown Artist',
+          }))
+
+        const shuffled = shuffle(items).slice(0, 8)
+        setArtworks(shuffled)
+      } catch (err) {
+        console.error('Artwork fetch error:', err)
+      }
+    }
+
+    fetchArtworks()
+  }, [])
+
+  useEffect(() => {
+    if (artworks.length > 0 && !currentResult) {
+      analyzeArtwork(artworks[0])
+    }
+  }, [artworks])
+
+  const handleSlideChange = (swiper: any) => {
+    const index = swiper.realIndex ?? swiper.activeIndex
+    const artwork = artworks[index]
+    if (artwork) {
+      analyzeArtwork(artwork)
+    }
+  }
+
+  const pct = (n: number) => `${Math.round(n * 100)}%`
 
   return (
     <HeroSectionStyled>
@@ -263,198 +498,192 @@ export default function HeroSection() {
               {copied ? 'Copied!' : 'Copy'}
             </button>
           </div>
+          <div className="hero__visual-kicker">Live demo</div>
           <div className="hero__visual">
-            <div className="hero__visual-panel">
-              <div className="hero__visual-header">chromancy() result</div>
-              <div className="hero__visual-group">
-                <div className="hero__visual-label">Average</div>
-                <div className="hero__swatch-row">
-                  <div
-                    className="hero__swatch"
-                    style={{ background: '#b86b4a' }}
-                  />
-                  <span className="hero__swatch-text">rgb(184, 107, 74)</span>
-                </div>
-              </div>
-              <div className="hero__visual-group">
-                <div className="hero__visual-label">Dominant</div>
-                <div className="hero__swatch-row">
-                  <div
-                    className="hero__swatch"
-                    style={{ background: '#c96442' }}
-                  />
-                  <span className="hero__swatch-text">rgb(201, 100, 66)</span>
-                </div>
-              </div>
-              <div className="hero__visual-group">
-                <div className="hero__visual-label">Palette</div>
-                <div className="hero__palette-row">
-                  <div
-                    className="hero__palette-swatch"
-                    style={{ background: '#c96442' }}
-                    title="rgb(201, 100, 66)"
-                  />
-                  <div
-                    className="hero__palette-swatch"
-                    style={{ background: '#5a7a6a' }}
-                    title="rgb(90, 122, 106)"
-                  />
-                  <div
-                    className="hero__palette-swatch"
-                    style={{ background: '#8b5a3c' }}
-                    title="rgb(139, 90, 60)"
-                  />
-                  <div
-                    className="hero__palette-swatch"
-                    style={{ background: '#d97757' }}
-                    title="rgb(217, 119, 87)"
-                  />
-                  <div
-                    className="hero__palette-swatch"
-                    style={{ background: '#4a6a5a' }}
-                    title="rgb(74, 106, 90)"
-                  />
-                </div>
-              </div>
-              <div className="hero__visual-group">
-                <div className="hero__visual-label">Image Properties</div>
-                <div className="hero__prop">
-                  <span className="hero__prop-label">Brightness</span>
-                  <div className="hero__prop-bar-bg">
-                    <div
-                      className="hero__prop-bar-fill"
-                      style={{ width: '62%' }}
-                    />
+            <div className="hero__visual-panel hero__visual-panel--swiper">
+              {artworks.length > 0 ? (
+                <>
+                  <Swiper
+                    modules={[Navigation, Autoplay]}
+                    navigation={{
+                      prevEl: prevRef.current,
+                      nextEl: nextRef.current,
+                    }}
+                    autoplay={{ delay: 5000, disableOnInteraction: false }}
+                    loop={artworks.length > 1}
+                    className="hero__swiper"
+                    onSwiper={(swiper) => {
+                      setTimeout(() => {
+                        if (!swiper.params?.navigation || !swiper.navigation)
+                          return;
+                        const nav = swiper.params.navigation;
+                        if (typeof nav !== 'boolean') {
+                          nav.prevEl = prevRef.current;
+                          nav.nextEl = nextRef.current;
+                        }
+                        swiper.navigation.init();
+                        swiper.navigation.update();
+                      });
+                    }}
+                    onSlideChange={handleSlideChange}
+                  >
+                    {artworks.map((art) => (
+                      <SwiperSlide key={art.id} className="hero__swiper-slide">
+                        <img
+                          src={art.imageUrl}
+                          alt={art.title}
+                          loading="lazy"
+                        />
+                        <div className="hero__swiper-info">
+                          <div className="hero__swiper-title">{art.title}</div>
+                          <div className="hero__swiper-artist">
+                            {art.artist}
+                          </div>
+                        </div>
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                  <div className="hero__swiper-nav">
+                    <button
+                      ref={prevRef}
+                      className="hero__swiper-btn"
+                      aria-label="Previous artwork"
+                    >
+                      ←
+                    </button>
+                    <button
+                      ref={nextRef}
+                      className="hero__swiper-btn"
+                      aria-label="Next artwork"
+                    >
+                      →
+                    </button>
                   </div>
-                  <span className="hero__prop-value">62%</span>
-                </div>
-                <div className="hero__prop">
-                  <span className="hero__prop-label">Warmth</span>
-                  <div className="hero__prop-bar-bg">
-                    <div
-                      className="hero__prop-bar-fill"
-                      style={{ width: '78%' }}
-                    />
-                  </div>
-                  <span className="hero__prop-value">78%</span>
-                </div>
-                <div className="hero__prop">
-                  <span className="hero__prop-label">Saturation</span>
-                  <div className="hero__prop-bar-bg">
-                    <div
-                      className="hero__prop-bar-fill"
-                      style={{ width: '45%' }}
-                    />
-                  </div>
-                  <span className="hero__prop-value">45%</span>
-                </div>
-                <div className="hero__prop">
-                  <span className="hero__prop-label">Contrast</span>
-                  <div className="hero__prop-bar-bg">
-                    <div
-                      className="hero__prop-bar-fill"
-                      style={{ width: '53%' }}
-                    />
-                  </div>
-                  <span className="hero__prop-value">53%</span>
-                </div>
-              </div>
+                </>
+              ) : (
+                <div className="hero__analyzing">Loading artworks...</div>
+              )}
             </div>
             <div className="hero__visual-panel">
               <div className="hero__visual-header">chromancy() result</div>
-              <div className="hero__visual-group">
-                <div className="hero__visual-label">Average</div>
-                <div className="hero__swatch-row">
-                  <div
-                    className="hero__swatch"
-                    style={{ background: '#b86b4a' }}
-                  />
-                  <span className="hero__swatch-text">rgb(184, 107, 74)</span>
+              {analyzing && !currentResult ? (
+                <div
+                  className="hero__analyzing"
+                  style={{
+                    marginTop: '-30.59px',
+                  }}
+                >
+                  Analyzing image...
                 </div>
-              </div>
-              <div className="hero__visual-group">
-                <div className="hero__visual-label">Dominant</div>
-                <div className="hero__swatch-row">
-                  <div
-                    className="hero__swatch"
-                    style={{ background: '#c96442' }}
-                  />
-                  <span className="hero__swatch-text">rgb(201, 100, 66)</span>
-                </div>
-              </div>
-              <div className="hero__visual-group">
-                <div className="hero__visual-label">Palette</div>
-                <div className="hero__palette-row">
-                  <div
-                    className="hero__palette-swatch"
-                    style={{ background: '#c96442' }}
-                    title="rgb(201, 100, 66)"
-                  />
-                  <div
-                    className="hero__palette-swatch"
-                    style={{ background: '#5a7a6a' }}
-                    title="rgb(90, 122, 106)"
-                  />
-                  <div
-                    className="hero__palette-swatch"
-                    style={{ background: '#8b5a3c' }}
-                    title="rgb(139, 90, 60)"
-                  />
-                  <div
-                    className="hero__palette-swatch"
-                    style={{ background: '#d97757' }}
-                    title="rgb(217, 119, 87)"
-                  />
-                  <div
-                    className="hero__palette-swatch"
-                    style={{ background: '#4a6a5a' }}
-                    title="rgb(74, 106, 90)"
-                  />
-                </div>
-              </div>
-              <div className="hero__visual-group">
-                <div className="hero__visual-label">Image Properties</div>
-                <div className="hero__prop">
-                  <span className="hero__prop-label">Brightness</span>
-                  <div className="hero__prop-bar-bg">
-                    <div
-                      className="hero__prop-bar-fill"
-                      style={{ width: '62%' }}
-                    />
+              ) : currentResult ? (
+                <>
+                  <div className="hero__visual-group">
+                    <div className="hero__visual-label">Average</div>
+                    <div className="hero__swatch-row">
+                      <div
+                        className="hero__swatch"
+                        style={{ background: currentResult.averageColor }}
+                      />
+                      <span className="hero__swatch-text">
+                        {currentResult.averageColor}
+                      </span>
+                    </div>
                   </div>
-                  <span className="hero__prop-value">62%</span>
-                </div>
-                <div className="hero__prop">
-                  <span className="hero__prop-label">Warmth</span>
-                  <div className="hero__prop-bar-bg">
-                    <div
-                      className="hero__prop-bar-fill"
-                      style={{ width: '78%' }}
-                    />
+                  <div className="hero__visual-group">
+                    <div className="hero__visual-label">Dominant</div>
+                    <div className="hero__swatch-row">
+                      <div
+                        className="hero__swatch"
+                        style={{ background: currentResult.dominantColor }}
+                      />
+                      <span className="hero__swatch-text">
+                        {currentResult.dominantColor}
+                      </span>
+                    </div>
                   </div>
-                  <span className="hero__prop-value">78%</span>
-                </div>
-                <div className="hero__prop">
-                  <span className="hero__prop-label">Saturation</span>
-                  <div className="hero__prop-bar-bg">
-                    <div
-                      className="hero__prop-bar-fill"
-                      style={{ width: '45%' }}
-                    />
+                  <div className="hero__visual-group">
+                    <div className="hero__visual-label">Palette</div>
+                    <div className="hero__palette-row">
+                      {currentResult.palette.map((color, i) => (
+                        <div
+                          key={i}
+                          className="hero__palette-swatch"
+                          style={{ background: color }}
+                          title={color}
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <span className="hero__prop-value">45%</span>
-                </div>
-                <div className="hero__prop">
-                  <span className="hero__prop-label">Contrast</span>
-                  <div className="hero__prop-bar-bg">
-                    <div
-                      className="hero__prop-bar-fill"
-                      style={{ width: '53%' }}
-                    />
+                  <div className="hero__visual-group">
+                    <div className="hero__visual-label">Image Properties</div>
+                    <div className="hero__prop">
+                      <span className="hero__prop-label">Brightness</span>
+                      <div className="hero__prop-bar-bg">
+                        <div
+                          className="hero__prop-bar-fill"
+                          style={{
+                            width: pct(currentResult.properties.brightness),
+                          }}
+                        />
+                      </div>
+                      <span className="hero__prop-value">
+                        {pct(currentResult.properties.brightness)}
+                      </span>
+                    </div>
+                    <div className="hero__prop">
+                      <span className="hero__prop-label">Warmth</span>
+                      <div className="hero__prop-bar-bg">
+                        <div
+                          className="hero__prop-bar-fill"
+                          style={{
+                            width: pct(currentResult.properties.warmth),
+                          }}
+                        />
+                      </div>
+                      <span className="hero__prop-value">
+                        {pct(currentResult.properties.warmth)}
+                      </span>
+                    </div>
+                    <div className="hero__prop">
+                      <span className="hero__prop-label">Saturation</span>
+                      <div className="hero__prop-bar-bg">
+                        <div
+                          className="hero__prop-bar-fill"
+                          style={{
+                            width: pct(currentResult.properties.saturation),
+                          }}
+                        />
+                      </div>
+                      <span className="hero__prop-value">
+                        {pct(currentResult.properties.saturation)}
+                      </span>
+                    </div>
+                    <div className="hero__prop">
+                      <span className="hero__prop-label">Contrast</span>
+                      <div className="hero__prop-bar-bg">
+                        <div
+                          className="hero__prop-bar-fill"
+                          style={{
+                            width: pct(currentResult.properties.contrast),
+                          }}
+                        />
+                      </div>
+                      <span className="hero__prop-value">
+                        {pct(currentResult.properties.contrast)}
+                      </span>
+                    </div>
                   </div>
-                  <span className="hero__prop-value">53%</span>
+                </>
+              ) : (
+                <div
+                  className="hero__analyzing"
+                  style={{
+                    marginTop: '-30.59px',
+                  }}
+                >
+                  Waiting for image...
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </Container>

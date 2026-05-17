@@ -33,3 +33,9 @@ input, textarea {
 code, pre {
   font-family: var(--font-mono), 'IBM Plex Mono', ui-monospace, Menlo, monospace;
 }
+
+/* Swiper */
+@import 'swiper/css';
+@import 'swiper/css/pagination';
+@import 'swiper/css/autoplay';
+@import 'swiper/css/navigation';
