@@ -20,8 +20,12 @@ const DocsPageStyled = styled.div`
   .docs-layout {
     display: grid;
     grid-template-columns: 220px 1fr;
-    gap: 48px;
+    gap: 24px;
     padding: 80px 0 40px;
+  }
+
+  .docs-layout > * {
+    min-width: 0;
   }
 
   @media (max-width: ${theme.breakpoints.lg}) {

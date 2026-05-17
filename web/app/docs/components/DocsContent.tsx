@@ -45,7 +45,19 @@ const DocsContentStyled = styled.main`
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     margin: 20px 0 32px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .table-wrapper table {
+    width: auto;
+    min-width: 100%;
   }
 
   .docs-content th,
@@ -69,6 +81,11 @@ const DocsContentStyled = styled.main`
     vertical-align: top;
   }
 
+  .col-description {
+    min-width: 280px;
+    width: 50%;
+  }
+
   .docs-content tr:hover td {
     background: ${theme.colors.surface};
   }
@@ -83,7 +100,8 @@ const DocsContentStyled = styled.main`
     font-size: 13px;
     line-height: 1.7;
     margin: 16px 0 28px;
-    white-space: pre;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
   }
 
   .code-block .comment {
@@ -188,15 +206,17 @@ export default function DocsContent() {
         </div>
 
         <h3>Parameters</h3>
-        <table>
-          <thead>
-            <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><code>source</code></td><td><code>HTMLImageElement | string</code></td><td>An image element or a URL string pointing to the image.</td></tr>
-            <tr><td><code>options</code></td><td><code>ChromancyOptions</code></td><td>Optional configuration object (see <a href="#options">Options</a>).</td></tr>
-          </tbody>
-        </table>
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Parameter</th><th>Type</th><th className="col-description">Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>source</code></td><td><code>HTMLImageElement | string</code></td><td className="col-description">An image element or a URL string pointing to the image.</td></tr>
+              <tr><td><code>options</code></td><td><code>ChromancyOptions</code></td><td className="col-description">Optional configuration object (see <a href="#options">Options</a>).</td></tr>
+            </tbody>
+          </table>
+        </div>
 
         <h2 id="batch">chromancyBatch()</h2>
         <p>Analyzes multiple images in parallel. Returns an array of results in the same order as the input sources.</p>
@@ -260,19 +280,21 @@ export default function DocsContent() {
         </div>
 
         <h2 id="options">Options</h2>
-        <table>
-          <thead>
-            <tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><code>maxSize</code></td><td><code>number</code></td><td><code>100</code></td><td>Maximum width or height (in pixels) to resize the image for analysis.</td></tr>
-            <tr><td><code>quantizationLevel</code></td><td><code>number</code></td><td><code>32</code></td><td>Color quantization level. Lower = more color bins (finer detail). Higher = less precision.</td></tr>
-            <tr><td><code>sampleRate</code></td><td><code>number</code></td><td><code>0.1</code></td><td>Fraction of pixels to sample (0 to 1). 0.5 = half of pixels.</td></tr>
-            <tr><td><code>paletteSize</code></td><td><code>number</code></td><td><code>5</code></td><td>Number of distinct colors in the palette. Set to 0 to disable.</td></tr>
-            <tr><td><code>colorScale</code></td><td><code>number</code></td><td><code>0</code></td><td>Normalizes and scales color intensity. 0 = no scaling.</td></tr>
-            <tr><td><code>outputFormat</code></td><td><code>string</code></td><td><code>&apos;rgb&apos;</code></td><td>Output format: <code>&apos;rgb&apos;</code>, <code>&apos;hex&apos;</code>, <code>&apos;hsl&apos;</code>, or <code>&apos;object&apos;</code>.</td></tr>
-          </tbody>
-        </table>
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Option</th><th>Type</th><th>Default</th><th className="col-description">Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>maxSize</code></td><td><code>number</code></td><td><code>100</code></td><td className="col-description">Maximum width or height (in pixels) to resize the image for analysis.</td></tr>
+              <tr><td><code>quantizationLevel</code></td><td><code>number</code></td><td><code>32</code></td><td className="col-description">Color quantization level. Lower = more color bins (finer detail). Higher = less precision.</td></tr>
+              <tr><td><code>sampleRate</code></td><td><code>number</code></td><td><code>0.1</code></td><td className="col-description">Fraction of pixels to sample (0 to 1). 0.5 = half of pixels.</td></tr>
+              <tr><td><code>paletteSize</code></td><td><code>number</code></td><td><code>5</code></td><td className="col-description">Number of distinct colors in the palette. Set to 0 to disable.</td></tr>
+              <tr><td><code>colorScale</code></td><td><code>number</code></td><td><code>0</code></td><td className="col-description">Normalizes and scales color intensity. 0 = no scaling.</td></tr>
+              <tr><td><code>outputFormat</code></td><td><code>string</code></td><td><code>&apos;rgb&apos;</code></td><td className="col-description">Output format: <code>&apos;rgb&apos;</code>, <code>&apos;hex&apos;</code>, <code>&apos;hsl&apos;</code>, or <code>&apos;object&apos;</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
 
         <h2 id="formats">Output Formats</h2>
         <div className="code-block">
@@ -347,14 +369,16 @@ export default function DocsContent() {
 
         <h2 id="browser">Browser Support</h2>
         <p>Chromancy uses browser DOM APIs (<code>canvas</code>, <code>document</code>) and works in all modern browsers.</p>
-        <table>
-          <thead>
-            <tr><th>Chrome</th><th>Firefox</th><th>Safari</th><th>Edge</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>60+</td><td>60+</td><td>12+</td><td>79+</td></tr>
-          </tbody>
-        </table>
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Chrome</th><th>Firefox</th><th>Safari</th><th>Edge</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>60+</td><td>60+</td><td>12+</td><td>79+</td></tr>
+            </tbody>
+          </table>
+        </div>
         <p style={{ marginTop: '16px' }}>
           <strong>Note:</strong> Cross-origin images require proper CORS headers. The library will throw an error if the image cannot be loaded due to CORS restrictions.
         </p>
