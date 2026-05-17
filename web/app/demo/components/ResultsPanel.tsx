@@ -15,7 +15,7 @@ const ResultsPanelStyled = styled.div`
 
   .result-panel {
     max-width: 800px;
-    margin: 0 auto 16px};
+    margin: 0 auto 16px;
     background: ${theme.colors.surface};
     border: 1px solid ${theme.colors.border};
     border-radius: ${theme.radii.xl};
@@ -81,7 +81,8 @@ const ResultsPanelStyled = styled.div`
     font-family: ${theme.fonts.mono};
     font-size: 13px;
     line-height: 1.7;
-    overflow-x: auto;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
   }
 
   .code-out .comment {

@@ -33,6 +33,7 @@ const DemoPageStyled = styled.div`
   }
 
   .url-row__input {
+    text-overflow: ellipsis;
     flex: 1;
     padding: 14px 18px;
     border: 1.5px solid ${theme.colors.border};
